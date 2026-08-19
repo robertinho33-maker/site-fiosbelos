@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="utf-8">
+    <title>Studio Totti - Agende Seu Horário</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="agendamento online, salão de beleza, studio totti, marcar horário" name="keywords">
+    <meta content="Agende seu horário no Studio Totti de forma rápida e fácil. Escolha data, serviço e horário disponível!" name="description">
+
+    <!-- Favicon -->
+    <link href="img/favicon.ico" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Playfair+Display:wght@500&family=Work+Sans&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Styles -->
+    <link href="lib/animate/animate.min.css" rel="stylesheet">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+
+    <style>
+        .calendar {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .calendar-header {
+            background: var(--bs-primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-weight: bold;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            padding: 20px;
+        }
+        .day {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1.1rem;
+        }
+        .day.other-month {
+            color: #ccc;
+        }
+        .day.today {
+            background: var(--bs-primary);
+            color: white;
+            font-weight: bold;
+        }
+        .day.available:hover {
+            background: #e3f2fd;
+            transform: scale(1.05);
+        }
+        .day.selected {
+            background: var(--bs-primary) !important;
+            color: white !important;
+            font-weight: bold;
+        }
+        .day.booked {
+            background: #ffebee;
+            color: #999;
+            cursor: not-allowed;
+        }
+        .time-slot {
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .time-slot.available {
+            background: #e8f5e8;
+            border: 2px solid #4caf50;
+        }
+        .time-slot.available:hover {
+            background: #4caf50;
+            color: white;
+            transform: translateY(-3px);
+        }
+        .time-slot.booked {
+            background: #ffebee;
+            color: #999;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Spinner -->
+    <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
+        <div class="spinner-grow text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="sr-only">Carregando...</span>
+        </div>
+    </div>
+
+    <!-- Navbar (mesma do seu site) -->
+    <div class="container-fluid bg-light sticky-top p-0">
+        <nav class="navbar navbar-expand-lg navbar-light p-0">
+            <a href="index.html" class="navbar-brand bg-primary py-4 px-5 me-0">
+                <h1 class="mb-0"><i class="bi bi-scissors"></i> Studio Totti</h1>
+            </a>
+            <button type="button" class="navbar-toggler me-4" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse p-3" id="navbarCollapse">
+                <div class="navbar-nav mx-auto">
+                    <a href="index.html" class="nav-item nav-link">Início</a>
+                    <a href="about.html" class="nav-item nav-link">Sobre</a>
+                    <a href="service.html" class="nav-item nav-link">Serviços</a>
+                    <a href="price.html" class="nav-item nav-link">Preços</a>
+                    <a href="agendamento.html" class="nav-item nav-link active">Agendar</a>
+                    <a href="contact.html" class="nav-item nav-link">Contato</a>
+                </div>
+                <div class="d-flex">
+                    <a class="btn btn-primary btn-sm-square me-3" href=""><i class="fab fa-instagram"></i></a>
+                    <a class="btn btn-primary btn-sm-square" href=""><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Page Header -->
+    <div class="container-fluid bg-light page-header py-5 mb-5">
+        <div class="container text-center py-5">
+            <h1 class="display-1 animated slideInLeft">Agende Seu Horário</h1>
+            <p class="lead animated slideInLeft">Escolha o dia e horário perfeito para cuidar de você!</p>
+        </div>
+    </div>
+
+    <!-- Calendário + Agendamento -->
+    <div class="container py-5">
+        <div class="row g-5">
+            <!-- Calendário -->
+            <div class="col-lg-7">
+                <div class="calendar wow fadeIn" data-wow-delay="0.2s">
+                    <div class="calendar-header">
+                        <button class="btn btn-light float-start" onclick="prevMonth()">&lt;</button>
+                        <h3 id="monthYear" class="mb-0"></h3>
+                        <button class="btn btn-light float-end" onclick="nextMonth()">&gt;</button>
+                    </div>
+                    <div class="calendar-days">
+                        <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+            </div>
+
+            <!-- Formulário de Agendamento -->
+            <div class="col-lg-5">
+                <div class="bg-light rounded p-5 shadow wow fadeIn" data-wow-delay="0.4s">
+                    <h2 class="font-dancing-script text-primary mb-4">Complete seu agendamento</h2>
+                    
+                    <div id="selectedInfo" class="mb-4 p-4 bg-white rounded text-center" style="display:none;">
+                        <h5>Data selecionada:</h5>
+                        <p id="selectedDate" class="fs-4 text-primary mb-0"></p>
+                    </div>
+
+                    <form id="formAgendamento">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Seu nome *</label>
+                            <input type="text" class="form-control form-control-lg" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">WhatsApp *</label>
+                            <input type="tel" class="form-control form-control-lg" placeholder="(11) 98765-4321" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Serviço desejado *</label>
+                            <select class="form-select form-select-lg" required>
+                                <option value="">Escolha um serviço...</option>
+                                <option>Corte Feminino - R$ 149</option>
+                                <option>Limpeza de Pele - R$ 299</option>
+                                <option>Manicure + Pedicure - R$ 299</option>
+                                <option>Massagem Relaxante - R$ 199</option>
+                                <option>Maquiagem para Evento - R$ 249</option>
+                                <option>Hidratação Capilar - R$ 179</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Horário disponível *</label>
+                            <div id="timeSlots"></div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Observações (opcional)</label>
+                            <textarea class="form-control" rows="3" placeholder="Ex: Quero com a profissional Ana, se possível..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100 py-3">
+                            <i class="bi bi-calendar-check"></i> Confirmar Agendamento
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-4">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i> Você receberá confirmação por WhatsApp em até 24h.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer (mesmo do seu site) -->
+    <div class="container-fluid footer position-relative bg-dark text-white-50 py-5 mt-5 wow fadeIn" data-wow-delay="0.2s">
+        <div class="container py-5">
+            <div class="row g-5">
+                <div class="col-lg-6 pe-lg-5">
+                    <a href="index.html" class="navbar-brand">
+                        <h1 class="display-5 text-primary mb-0"><i class="bi bi-scissors"></i> Studio Totti</h1>
+                    </a>
+                    <p class="mb-2"><i class="fa fa-map-marker-alt me-2"></i>Rua Engenheiro Jorge Oliva, 570 - São Paulo, SP</p>
+                    <p class="mb-2"><i class="fa fa-phone-alt me-2"></i>(11) 98267-6539</p>
+                    <p><i class="fa fa-envelope me-2"></i>contato@studiototti.com.br</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copyright -->
+    <div class="container-fluid bg-dark text-white border-top border-secondary py-4">
+        <div class="container text-center">
+            © Studio Totti - Todos os direitos reservados
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="lib/wow/wow.min.js"></script>
+    <script src="js/main.js"></script>
+
+    <script>
+        let currentDate = new Date();
+        let selectedDate = null;
+
+        const horariosDisponiveis = {
+            // Simulação: horários livres por data (YYYY-MM-DD)
+            "2025-12-30": ["09:00", "10:30", "14:00", "15:30", "17:00"],
+            "2025-12-31": ["09:00", "11:00", "14:00", "16:00"],
+            "2026-01-02": ["10:00", "13:00", "15:00", "18:00", "19:30"],
+            // Adicione mais conforme necessário ou conecte com banco
+        };
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDay = firstDay.getDay();
+
+            document.getElementById('monthYear').textContent = 
+                currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase());
+
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
+            // Dias do mês anterior
+            for (let i = 0; i < startingDay; i++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'day other-month';
+                grid.appendChild(dayEl);
+            }
+
+            // Dias do mês atual
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayEl = document.createElement('div');
+                dayEl.className = 'day available';
+                dayEl.textContent = day;
+
+                const today = new Date();
+                if (year === today.getFullYear() && month === today.getMonth() && day === today.getDate()) {
+                    dayEl.classList.add('today');
+                }
+
+                // Simulação: alguns dias sem horário
+                if (!horariosDisponiveis[dateStr] || horariosDisponiveis[dateStr].length === 0) {
+                    dayEl.classList.remove('available');
+                    dayEl.classList.add('booked');
+                }
+
+                dayEl.onclick = () => selectDate(dateStr, dayEl);
+                grid.appendChild(dayEl);
+            }
+        }
+
+        function selectDate(dateStr, element) {
+            document.querySelectorAll('.day.selected').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedDate = dateStr;
+
+            document.getElementById('selectedInfo').style.display = 'block';
+            document.getElementById('selectedDate').textContent = 
+                new Date(dateStr).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+                .replace(/^\w/, c => c.toUpperCase());
+
+            renderTimeSlots(dateStr);
+        }
+
+        function renderTimeSlots(dateStr) {
+            const slotsContainer = document.getElementById('timeSlots');
+            slotsContainer.innerHTML = '<p class="text-muted">Selecione um horário:</p>';
+
+            const horarios = horariosDisponiveis[dateStr] || [];
+            if (horarios.length === 0) {
+                slotsContainer.innerHTML += '<p class="text-danger">Nenhum horário disponível nesta data.</p>';
+                return;
+            }
+
+            horarios.forEach(horario => {
+                const slot = document.createElement('div');
+                slot.className = 'time-slot available';
+                slot.textContent = horario;
+                slot.onclick = () => {
+                    document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+                    slot.classList.add('selected');
+                    slot.style.background = '#1976d2';
+                    slot.style.color = 'white';
+                };
+                slotsContainer.appendChild(slot);
+            });
+        }
+
+        function prevMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+
+        // Envio do formulário (simulação)
+        document.getElementById('formAgendamento').onsubmit = function(e) {
+            e.preventDefault();
+            if (!selectedDate) {
+                alert('Por favor, selecione uma data no calendário.');
+                return;
+            }
+            alert('Agendamento enviado com sucesso! Entraremos em contato pelo WhatsApp em breve. 💜');
+            // Aqui você pode integrar com WhatsApp API ou Firebase
+        };
+
+        // Inicializar
+        renderCalendar();
+    </script>
+</body>
+
+</html>
