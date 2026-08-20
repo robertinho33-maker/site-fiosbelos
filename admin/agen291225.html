@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <title>Studio Totti | Gestão</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div id="loading-overlay">
+    <div class="text-center">
+        <div class="spinner-border text-primary"></div>
+        <p>Conectando ao Studio Totti...</p>
+    </div>
+</div>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="calendar-box border p-3 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <button class="btn btn-sm btn-dark" id="prevMes">&lt;</button>
+                    <h6 id="labelMes" class="mb-0"></h6>
+                    <button class="btn btn-sm btn-dark" id="nextMes">&gt;</button>
+                </div>
+                <div id="gridCalendario" class="row g-0 text-center"></div>
+            </div>
+            
+            <div class="border p-3">
+                <h6>Filtro</h6>
+                <select id="filtroProf" class="form-select">
+                    <option value="todos">Todos os Profissionais</option>
+                    <option value="Ana">Ana</option>
+                    <option value="Juliana">Juliana</option>
+                    <option value="Fernanda">Fernanda</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 id="tituloAgenda">Agenda</h4>
+                <button class="btn btn-primary" id="btnNovoAgendamento">+ Novo Agendamento</button>
+            </div>
+            <div class="table-responsive border">
+                <table class="table table-bordered mb-0">
+                    <thead class="table-dark text-center">
+                        <tr id="headerProfissionais">
+                            <th style="width:100px;">Horário</th>
+                            <th>Ana</th>
+                            <th>Juliana</th>
+                            <th>Fernanda</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoAgenda"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalAgendar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formAgendamento">
+                <div class="modal-header">
+                    <h5 class="modal-title">Agendamento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="fieldId">
+                    <div class="mb-3">
+                        <label class="form-label">Data</label>
+                        <input type="date" id="fieldData" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cliente</label>
+                        <input type="text" id="fieldNome" class="form-control" placeholder="Nome completo" required>
+                        <small id="clienteStatus"></small>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Profissional</label>
+                            <select id="fieldProf" class="form-select"></select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Horário</label>
+                            <select id="fieldHora" class="form-select"></select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Serviço</label>
+                        <input type="text" id="fieldServico" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary" id="btnAbrirModalCliente">+ Cliente</button>
+                    <button type="submit" class="btn btn-primary">Salvar Agendamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalCliente" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <form id="formCliente">
+                <div class="modal-header"><h5>Novo Cliente</h5></div>
+                <div class="modal-body">
+                    <input type="text" id="nomeClienteNovo" class="form-control" placeholder="Nome completo" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success w-100">Cadastrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module" src="../js/script.js"></script>
+</body>
+</html>

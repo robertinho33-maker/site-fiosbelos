@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="utf-8">
+    <title>Studio Totti - Cadastrar Novo Serviço</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="cadastro de serviços, admin studio totti, adicionar serviço beleza" name="keywords">
+    <meta content="Painel administrativo do Studio Totti - Cadastro de novos serviços e pacotes" name="description">
+
+    <!-- Favicon -->
+    <link href="../img/favicon.ico" rel="icon">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Playfair+Display:wght@500&family=Work+Sans&display=swap" rel="stylesheet">
+
+    <!-- Icon Font -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="../lib/animate/animate.min.css" rel="stylesheet">
+
+    <!-- Bootstrap -->
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Spinner -->
+    <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
+        <div class="spinner-grow text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="sr-only">Carregando...</span>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <div class="container-fluid bg-light sticky-top p-0">
+        <nav class="navbar navbar-expand-lg navbar-light p-0">
+            <a href="../index.html" class="navbar-brand bg-primary py-4 px-5 me-0">
+                <h1 class="mb-0"><i class="bi bi-scissors"></i> Studio Totti</h1>
+            </a>
+            <button type="button" class="navbar-toggler me-4" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse p-3" id="navbarCollapse">
+                <div class="navbar-nav mx-auto">
+                    <a href="../index.html" class="nav-item nav-link">Início</a>
+                    <a href="../service.html" class="nav-item nav-link">Serviços</a>
+                    <a href="../price.html" class="nav-item nav-link">Preços</a>
+                    <a href="../testimonial.html" class="nav-item nav-link">Depoimentos</a>
+                    <a href="../contact.html" class="nav-item nav-link">Contato</a>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Page Header -->
+    <div class="container-fluid bg-light page-header py-5 mb-5">
+        <div class="container text-center py-5">
+            <h1 class="display-1 animated slideInLeft">Área Administrativa</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb justify-content-center animated slideInLeft mb-0">
+                    <li class="breadcrumb-item"><a class="text-primary" href="../index.html">Início</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Cadastrar Serviço</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Formulário de Cadastro de Serviço -->
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 wow fadeInUp" data-wow-delay="0.3s">
+                <div class="bg-light rounded p-5 shadow">
+                    <div class="text-center mb-5">
+                        <h1 class="font-dancing-script text-primary">Novo Serviço</h1>
+                        <h3>Preencha todos os campos para adicionar um novo serviço</h3>
+                    </div>
+
+                    <form id="formCadastroServico">
+                        <div class="row g-4">
+                            <!-- Nome do Serviço -->
+                            <div class="col-md-8">
+                                <label class="form-label fw-bold">Nome do Serviço *</label>
+                                <input type="text" class="form-control form-control-lg" placeholder="Ex: Limpeza de Pele Profunda" required>
+                            </div>
+
+                            <!-- Preço -->
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Preço *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" step="0.01" class="form-control form-control-lg" placeholder="199,90" required>
+                                </div>
+                            </div>
+
+                            <!-- Categoria -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Categoria *</label>
+                                <select class="form-select form-select-lg" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="cabelo">Cabelo</option>
+                                    <option value="facial">Facial / Estética</option>
+                                    <option value="corporal">Corporal</option>
+                                    <option value="unhas">Unhas</option>
+                                    <option value="maquiagem">Maquiagem</option>
+                                    <option value="depilacao">Depilação</option>
+                                    <option value="pacote">Pacotes Promocionais</option>
+                                </select>
+                            </div>
+
+                            <!-- Duração -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Duração aproximada *</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control form-control-lg" placeholder="90" required>
+                                    <span class="input-group-text">minutos</span>
+                                </div>
+                            </div>
+
+                            <!-- Descrição Curta -->
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Descrição curta (aparece na lista)</label>
+                                <textarea class="form-control" rows="3" placeholder="Ex: Remove cravos, oleosidade e renova a pele com produtos premium."></textarea>
+                            </div>
+
+                            <!-- Descrição Completa -->
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Descrição completa (opcional - página do serviço)</label>
+                                <textarea class="form-control" rows="6" placeholder="Detalhe benefícios, produtos usados, contraindicações, etc."></textarea>
+                            </div>
+
+                            <!-- Promoção? -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Está em promoção?</label>
+                                <div class="d-flex gap-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="promocao" id="simPromo" value="sim">
+                                        <label class="form-check-label" for="simPromo">Sim</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="promocao" id="naoPromo" value="nao" checked>
+                                        <label class="form-check-label" for="naoPromo">Não</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Valor Promocional -->
+                            <div class="col-md-6" id="campoValorPromo" style="display: none;">
+                                <label class="form-label fw-bold">Valor com desconto</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" step="0.01" class="form-control form-control-lg" placeholder="149,90">
+                                </div>
+                            </div>
+
+                            <!-- Foto do Serviço -->
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Foto do serviço (máx. 2MB)</label>
+                                <input type="file" class="form-control form-control-lg" accept="image/*">
+                                <div class="form-text">Recomendado: 800x600px • JPG ou PNG</div>
+                            </div>
+
+                            <!-- Botões -->
+                            <div class="col-12 text-center mt-4">
+                                <button type="submit" class="btn btn-primary btn-lg px-5 py-3 me-3">
+                                    <i class="bi bi-check2-circle"></i> Cadastrar Serviço
+                                </button>
+                                <a href="../price.html" class="btn btn-outline-secondary btn-lg px-5 py-3">
+                                    <i class="bi bi-arrow-left"></i> Voltar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer (mesmo do seu site) -->
+    <div class="container-fluid footer position-relative bg-dark text-white-50 py-5 mt-5 wow fadeIn" data-wow-delay="0.2s">
+        <div class="container py-5">
+            <div class="row g-5">
+                <div class="col-lg-6 pe-lg-5">
+                    <a href="../index.html" class="navbar-brand">
+                        <h1 class="display-5 text-primary mb-0"><i class="bi bi-scissors"></i> Studio Totti</h1>
+                    </a>
+                    <p>No Studio Totti você encontra o cuidado que merece. Tratamentos faciais, corporais e capilares com tecnologia de ponta.</p>
+                    <p class="mb-2"><i class="fa fa-map-marker-alt me-2"></i>Rua Engenheiro Jorge Oliva, 570 - São Paulo, SP</p>
+                    <p class="mb-2"><i class="fa fa-phone-alt me-2"></i>(11) 98267-6539</p>
+                    <p><i class="fa fa-envelope me-2"></i>contato@studiototti.com.br</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copyright -->
+    <div class="container-fluid bg-dark text-white border-top border-secondary py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 text-center text-md-start">
+                    © <a class="border-bottom" href="#">Studio Totti</a>, Todos os direitos reservados.
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    Desenvolvido com carinho
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+
+    <!-- Scripts -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../lib/wow/wow.min.js"></script>
+    <script src="../lib/easing/easing.min.js"></script>
+    <script src="../js/main.js"></script>
+
+    <!-- Script para mostrar campo de promoção -->
+    <script>
+        document.querySelectorAll('input[name="promocao"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('campoValorPromo').style.display = this.value === 'sim' ? 'block' : 'none';
+            });
+        });
+
+        // Simulação de envio (pode conectar com PHP/Node depois)
+        document.getElementById('formCadastroServico').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Serviço cadastrado com sucesso! (em breve você conectará com o banco de dados)');
+        });
+    </script>
+</body>
+
+</html>
