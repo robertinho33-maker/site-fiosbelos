@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Administrativo | Fios Perfeitos</title>
-    <!-- Google Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,163 +12,78 @@
         :root {
             --fp-primary: #121212;
             --fp-accent: #D4AF37;
-            --fp-accent-light: #fbf7e8;
             --fp-bg: #f8f9fa;
             --fp-card-border: #edf2f7;
             --fp-sidebar-width: 260px;
         }
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--fp-bg);
-            color: #2d3748;
-        }
-
-        /* Sidebar Navigation */
-        .sidebar {
-            width: var(--fp-sidebar-width);
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background-color: var(--fp-primary);
-            color: #fff;
-            padding: 1.5rem 1rem;
-            z-index: 1000;
-        }
-
-        .sidebar-brand {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--fp-accent);
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 2rem;
-            padding: 0 0.5rem;
-        }
-
-        .sidebar .nav-link {
-            color: #a0aec0;
-            font-weight: 500;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            margin-bottom: 0.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            transition: all 0.2s ease;
-        }
-
-        .sidebar .nav-link:hover, 
-        .sidebar .nav-link.active {
-            color: #fff;
-            background-color: rgba(212, 175, 55, 0.15);
-        }
-
-        .sidebar .nav-link.active {
-            color: var(--fp-accent);
-            font-weight: 600;
-        }
-
-        /* Main Content Layout */
-        .main-wrapper {
-            margin-left: var(--fp-sidebar-width);
-            padding: 2rem;
-        }
-
-        .card-custom {
-            background: #fff;
-            border: 1px solid var(--fp-card-border);
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
-
-        .stat-card {
-            padding: 1.25rem;
-            border-radius: 12px;
-            background: #fff;
-            border: 1px solid var(--fp-card-border);
-        }
-
-        .btn-accent {
-            background-color: var(--fp-accent);
-            color: #000;
-            font-weight: 600;
-            border: none;
-        }
-
-        .btn-accent:hover {
-            background-color: #b89628;
-            color: #fff;
-        }
-
-        .table thead th {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 700;
-            color: #718096;
-            background-color: #f7fafc;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .badge-status {
-            font-weight: 600;
-            padding: 0.35em 0.65em;
-            border-radius: 6px;
-        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--fp-bg); color: #2d3748; }
+        .sidebar { width: var(--fp-sidebar-width); height: 100vh; position: fixed; top: 0; left: 0; background-color: var(--fp-primary); color: #fff; padding: 1.5rem 1rem; z-index: 1000; }
+        .sidebar-brand { font-size: 1.25rem; font-weight: 700; color: var(--fp-accent); display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem; }
+        .sidebar .nav-link { color: #a0aec0; font-weight: 500; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.75rem; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background-color: rgba(212, 175, 55, 0.15); }
+        .sidebar .nav-link.active { color: var(--fp-accent); font-weight: 600; }
+        .main-wrapper { margin-left: var(--fp-sidebar-width); padding: 2rem; }
+        .card-custom { background: #fff; border: 1px solid var(--fp-card-border); border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .filter-bar { background-color: #f7fafc; padding: 1rem; border-radius: 8px; margin-bottom: 1.25rem; border: 1px solid #e2e8f0; }
+        .btn-accent { background-color: var(--fp-accent); color: #000; font-weight: 600; border: none; }
+        .btn-accent:hover { background-color: #b89628; color: #fff; }
+        .table thead th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #718096; background-color: #f7fafc; }
     </style>
 </head>
 <body>
 
-    <!-- Sidebar Navegação Lateral -->
     <aside class="sidebar">
         <div class="sidebar-brand">
             <i class="fa-solid fa-crown"></i>
             <span>Fios Perfeitos</span>
         </div>
         <nav class="nav flex-column" id="adminTabs" role="tablist">
-            <a class="nav-link active" id="orders-tab" data-bs-toggle="tab" href="#orders-panel">
-                <i class="fa-solid fa-bag-shopping"></i> Pedidos
-            </a>
-            <a class="nav-link" id="customers-tab" data-bs-toggle="tab" href="#customers-panel">
-                <i class="fa-solid fa-users"></i> Clientes
-            </a>
-            <a class="nav-link" id="coupons-tab" data-bs-toggle="tab" href="#coupons-panel">
-                <i class="fa-solid fa-ticket"></i> Cupons & Afiliados
-            </a>
-            <a class="nav-link" id="commissions-tab" data-bs-toggle="tab" href="#commissions-panel">
-                <i class="fa-solid fa-hand-holding-dollar"></i> Comissões
-            </a>
-            <a class="nav-link" id="products-tab" data-bs-toggle="tab" href="#products-panel">
-                <i class="fa-solid fa-box"></i> Catálogo (CSV)
-            </a>
+            <a class="nav-link active" id="orders-tab" data-bs-toggle="tab" href="#orders-panel"><i class="fa-solid fa-bag-shopping"></i> Pedidos</a>
+            <a class="nav-link" id="customers-tab" data-bs-toggle="tab" href="#customers-panel"><i class="fa-solid fa-users"></i> Clientes</a>
+            <a class="nav-link" id="coupons-tab" data-bs-toggle="tab" href="#coupons-panel"><i class="fa-solid fa-ticket"></i> Cupons</a>
+            <a class="nav-link" id="commissions-tab" data-bs-toggle="tab" href="#commissions-panel"><i class="fa-solid fa-hand-holding-dollar"></i> Comissões</a>
+            <a class="nav-link" id="products-tab" data-bs-toggle="tab" href="#products-panel"><i class="fa-solid fa-box"></i> Catálogo (CSV)</a>
         </nav>
         <div class="mt-auto pt-4 border-top border-secondary">
-            <a href="index.html" class="btn btn-outline-light btn-sm w-100">
-                <i class="fa-solid fa-store me-2"></i>Ver Loja
-            </a>
+            <a href="index.html" class="btn btn-outline-light btn-sm w-100"><i class="fa-solid fa-store me-2"></i>Ver Loja</a>
         </div>
     </aside>
 
-    <!-- Conteúdo Principal -->
     <main class="main-wrapper">
         <div class="tab-content">
             
-            <!-- 1. PAINEL DE PEDIDOS -->
+            <!-- 1. PEDIDOS -->
             <div class="tab-pane fade show active" id="orders-panel">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h4 class="fw-bold mb-1">Gerenciamento de Pedidos</h4>
-                        <p class="text-muted small mb-0">Acompanhe e atualize os status de compra dos clientes.</p>
-                    </div>
-                    <button class="btn btn-sm btn-white border shadow-sm" onclick="loadOrders()">
-                        <i class="fa-solid fa-rotate me-1"></i> Atualizar
-                    </button>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold m-0">Gerenciamento de Pedidos</h4>
+                    <button class="btn btn-sm btn-white border" onclick="loadOrders()"><i class="fa-solid fa-rotate me-1"></i> Atualizar</button>
                 </div>
-
+                
                 <div class="card-custom p-4">
+                    <!-- BARRA DE FILTROS - PEDIDOS -->
+                    <div class="filter-bar row g-2 align-items-center">
+                        <div class="col-md-4">
+                            <input type="text" id="filter-order-search" class="form-control form-control-sm" placeholder="Buscar por cliente ou ID..." oninput="filterOrders()">
+                        </div>
+                        <div class="col-md-3">
+                            <select id="filter-order-status" class="form-select form-select-sm" onchange="filterOrders()">
+                                <option value="">Todos os Status</option>
+                                <option value="Pendente">Pendente</option>
+                                <option value="Pago">Pago</option>
+                                <option value="Enviado">Enviado</option>
+                                <option value="Cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="filter-order-sort" class="form-select form-select-sm" onchange="filterOrders()">
+                                <option value="newest">Mais recentes primeiro</option>
+                                <option value="oldest">Mais antigos primeiro</option>
+                                <option value="highest">Maior valor</option>
+                                <option value="lowest">Menor valor</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="table-responsive">
                         <table class="table table-hover align-middle small mb-0">
                             <thead>
@@ -179,22 +93,28 @@
                                     <th>Cliente</th>
                                     <th>Total</th>
                                     <th>Cupom</th>
-                                    <th>Status do Pedido</th>
+                                    <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody id="admin-orders-list">
-                                <tr><td colspan="6" class="text-center py-4 text-muted">Carregando dados...</td></tr>
+                                <tr><td colspan="6" class="text-center py-4 text-muted">Carregando pedidos...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- 2. PAINEL DE CLIENTES -->
+            <!-- 2. CLIENTES -->
             <div class="tab-pane fade" id="customers-panel">
-                <h4 class="fw-bold mb-1">Clientes Cadastrados</h4>
-                <p class="text-muted small mb-4">Base de usuários registrados na plataforma.</p>
+                <h4 class="fw-bold mb-3">Clientes Cadastrados</h4>
                 <div class="card-custom p-4">
+                    <!-- BARRA DE FILTROS - CLIENTES -->
+                    <div class="filter-bar row g-2 align-items-center">
+                        <div class="col-md-6">
+                            <input type="text" id="filter-customer-search" class="form-control form-control-sm" placeholder="Buscar por nome, e-mail ou cidade..." oninput="filterCustomers()">
+                        </div>
+                    </div>
+
                     <div class="table-responsive">
                         <table class="table table-hover align-middle small mb-0">
                             <thead>
@@ -214,7 +134,7 @@
                 </div>
             </div>
 
-            <!-- 3. PAINEL DE CUPONS -->
+            <!-- 3. CUPONS -->
             <div class="tab-pane fade" id="coupons-panel">
                 <h4 class="fw-bold mb-4">Cupons & Afiliados</h4>
                 <div class="row g-4">
@@ -253,7 +173,20 @@
                     </div>
                     <div class="col-md-8">
                         <div class="card-custom p-4">
-                            <h6 class="fw-bold mb-3">Cupons Ativos</h6>
+                            <!-- BARRA DE FILTROS - CUPONS -->
+                            <div class="filter-bar row g-2 align-items-center">
+                                <div class="col-md-6">
+                                    <input type="text" id="filter-coupon-search" class="form-control form-control-sm" placeholder="Buscar por código ou afiliado..." oninput="filterCoupons()">
+                                </div>
+                                <div class="col-md-4">
+                                    <select id="filter-coupon-status" class="form-select form-select-sm" onchange="filterCoupons()">
+                                        <option value="">Todos os Status</option>
+                                        <option value="active">Ativos</option>
+                                        <option value="inactive">Inativos</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <div class="table-responsive">
                                 <table class="table table-hover align-middle small mb-0">
                                     <thead>
@@ -276,11 +209,17 @@
                 </div>
             </div>
 
-            <!-- 4. PAINEL DE COMISSÕES -->
+            <!-- 4. COMISSÕES -->
             <div class="tab-pane fade" id="commissions-panel">
-                <h4 class="fw-bold mb-1">Comissões Geradas</h4>
-                <p class="text-muted small mb-4">Relatório de valores devidos a afiliados por cupom utilizado.</p>
+                <h4 class="fw-bold mb-3">Comissões Geradas</h4>
                 <div class="card-custom p-4">
+                    <!-- BARRA DE FILTROS - COMISSÕES -->
+                    <div class="filter-bar row g-2 align-items-center">
+                        <div class="col-md-6">
+                            <input type="text" id="filter-commission-search" class="form-control form-control-sm" placeholder="Buscar por afiliado ou cupom..." oninput="filterCommissions()">
+                        </div>
+                    </div>
+
                     <div class="table-responsive">
                         <table class="table table-hover align-middle small mb-0">
                             <thead>
@@ -301,18 +240,18 @@
                 </div>
             </div>
 
-            <!-- 5. PAINEL DE PRODUTOS -->
+            <!-- 5. PRODUTOS CSV -->
             <div class="tab-pane fade" id="products-panel">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h4 class="fw-bold mb-1">Catálogo e CSV</h4>
-                        <p class="text-muted small mb-0">Edite a lista local de produtos e baixe o arquivo atualizado.</p>
-                    </div>
-                    <button class="btn btn-sm btn-dark" onclick="exportCSV()">
-                        <i class="fa-solid fa-download me-1"></i> Baixar CSV
-                    </button>
+                    <h4 class="fw-bold m-0">Catálogo e CSV</h4>
+                    <button class="btn btn-sm btn-dark" onclick="exportCSV()"><i class="fa-solid fa-download me-1"></i> Baixar CSV</button>
                 </div>
                 <div class="card-custom p-4">
+                    <div class="filter-bar row g-2 align-items-center">
+                        <div class="col-md-6">
+                            <input type="text" id="filter-product-search" class="form-control form-control-sm" placeholder="Buscar por produto ou SKU..." oninput="filterProducts()">
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle small mb-0">
                             <thead>
@@ -324,9 +263,7 @@
                                     <th>Ações</th>
                                 </tr>
                             </thead>
-                            <tbody id="admin-products-list">
-                                <!-- Preenchido via JS -->
-                            </tbody>
+                            <tbody id="admin-products-list"></tbody>
                         </table>
                     </div>
                 </div>
