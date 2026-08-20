@@ -1,4 +1,4 @@
-import { db } from "./firebase-config.js";[cite: 2, 3]
+import { db } from "./firebase-config.js";
 import { 
     collection, 
     doc, 
@@ -7,7 +7,7 @@ import {
     updateDoc, 
     query, 
     orderBy 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";[cite: 2, 3]
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // Armazenamento local dos dados para filtragem rápida
 let rawOrders = [];
@@ -260,31 +260,31 @@ function filterCommissions() {
 // ==========================================
 async function loadProducts() {
     try {
-        const response = await fetch('ecocsv - products1.csv');[cite: 2]
-        if (!response.ok) throw new Error("Erro ao carregar o CSV");[cite: 2]
+        const response = await fetch('ecocsv - products1.csv');
+        if (!response.ok) throw new Error("Erro ao carregar o CSV");
 
-        const csvText = await response.text();[cite: 2]
-        rawProducts = parseCSV(csvText);[cite: 2]
+        const csvText = await response.text();
+        rawProducts = parseCSV(csvText);
         filterProducts();
     } catch (err) {
-        console.error("Erro ao carregar produtos:", err);[cite: 2]
+        console.error("Erro ao carregar produtos:", err);
     }
 }
 
 function parseCSV(text) {
-    const lines = text.trim().split('\n');[cite: 2]
-    if (lines.length < 2) return [];[cite: 2]
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) return [];
 
-    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));[cite: 2]
-    return lines.slice(1).map((line, idx) => {[cite: 2]
-        const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/^"|"$/g, ''));[cite: 2]
+    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+    return lines.slice(1).map((line, idx) => {
+        const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/^"|"$/g, ''));
         return {
             id: idx,
-            SKU: values[headers.indexOf("SKU")] || `SKU-${idx+1}`,[cite: 2]
-            Produto: values[headers.indexOf("Produto")] || "Sem nome",[cite: 2]
-            Peso: values[headers.indexOf("Peso")] || "",[cite: 2]
-            Preço: values[headers.indexOf("Preço")] || values[headers.indexOf("Preco")] || "0",[cite: 2]
-            Estoque: values[headers.indexOf("Estoque")] || "10"[cite: 2]
+            SKU: values[headers.indexOf("SKU")] || `SKU-${idx+1}`,
+            Produto: values[headers.indexOf("Produto")] || "Sem nome",
+            Peso: values[headers.indexOf("Peso")] || "",
+            Preço: values[headers.indexOf("Preço")] || values[headers.indexOf("Preco")] || "0",
+            Estoque: values[headers.indexOf("Estoque")] || "10"
         };
     });
 }
@@ -303,14 +303,14 @@ function filterProducts() {
             <td>${escapeHTML(p.Produto)}</td>
             <td>
                 <input type="text" class="form-control form-control-sm" style="width: 100px;" 
-                       value="${escapeHTML(p.Preço)}" onchange="updateProductField(${index}, 'Preço', this.value)">[cite: 2]
+                       value="${escapeHTML(p.Preço)}" onchange="updateProductField(${index}, 'Preço', this.value)">
             </td>
             <td>
                 <input type="number" class="form-control form-control-sm" style="width: 80px;" 
-                       value="${parseInt(p.Estoque) || 0}" onchange="updateProductField(${index}, 'Estoque', this.value)">[cite: 2]
+                       value="${parseInt(p.Estoque) || 0}" onchange="updateProductField(${index}, 'Estoque', this.value)">
             </td>
             <td>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${index})">[cite: 2]
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${index})">
                     <i class="fa fa-trash"></i>
                 </button>
             </td>
@@ -319,50 +319,50 @@ function filterProducts() {
 }
 
 function updateProductField(index, field, value) {
-    if (rawProducts[index]) rawProducts[index][field] = value;[cite: 2]
+    if (rawProducts[index]) rawProducts[index][field] = value;
 }
 
 function deleteProduct(index) {
-    if (confirm("Deseja remover este produto?")) {[cite: 2]
-        rawProducts.splice(index, 1);[cite: 2]
+    if (confirm("Deseja remover este produto?")) {
+        rawProducts.splice(index, 1);
         filterProducts();
     }
 }
 
 function exportCSV() {
-    if (rawProducts.length === 0) return alert("Sem produtos.");[cite: 2]
-    const headers = ["SKU", "Produto", "Peso", "Preço", "Categoria", "Estoque", "Descrição", "Imagem"];[cite: 2]
-    let csvContent = headers.join(",") + "\n";[cite: 2]
-    rawProducts.forEach(p => {[cite: 2]
-        const row = headers.map(h => `"${(p[h] || "").toString().replace(/"/g, '""')}"`);[cite: 2]
-        csvContent += row.join(",") + "\n";[cite: 2]
+    if (rawProducts.length === 0) return alert("Sem produtos.");
+    const headers = ["SKU", "Produto", "Peso", "Preço", "Categoria", "Estoque", "Descrição", "Imagem"];
+    let csvContent = headers.join(",") + "\n";
+    rawProducts.forEach(p => {
+        const row = headers.map(h => `"${(p[h] || "").toString().replace(/"/g, '""')}"`);
+        csvContent += row.join(",") + "\n";
     });
-    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });[cite: 2]
-    const url = URL.createObjectURL(blob);[cite: 2]
-    const link = document.createElement("a");[cite: 2]
-    link.href = url;[cite: 2]
-    link.download = "ecocsv - products1.csv";[cite: 2]
-    link.click();[cite: 2]
+    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ecocsv - products1.csv";
+    link.click();
 }
 
 function escapeHTML(str) {
-    return String(str || '').replace(/[&<>"']/g, m => ({[cite: 2]
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'[cite: 2]
+    return String(str || '').replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     })[m]);
 }
 
 // Exposições Globais
-window.saveCoupon = saveCoupon;[cite: 2]
-window.loadOrders = loadOrders;[cite: 2]
-window.updateOrderStatus = updateOrderStatus;[cite: 2]
+window.saveCoupon = saveCoupon;
+window.loadOrders = loadOrders;
+window.updateOrderStatus = updateOrderStatus;
 window.filterOrders = filterOrders;
 window.filterCustomers = filterCustomers;
 window.filterCoupons = filterCoupons;
 window.filterCommissions = filterCommissions;
 window.filterProducts = filterProducts;
-window.updateProductField = updateProductField;[cite: 2]
-window.deleteProduct = deleteProduct;[cite: 2]
-window.exportCSV = exportCSV;[cite: 2]
+window.updateProductField = updateProductField;
+window.deleteProduct = deleteProduct;
+window.exportCSV = exportCSV;
 
 document.addEventListener("DOMContentLoaded", () => {
     loadOrders();
