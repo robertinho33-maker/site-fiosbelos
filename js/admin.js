@@ -9,7 +9,7 @@ import {
     orderBy 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Armazenamento local dos dados para filtragem rápida
+// Memory Data Stores
 let rawOrders = [];
 let rawCustomers = [];
 let rawCoupons = [];
@@ -17,7 +17,7 @@ let rawCommissions = [];
 let rawProducts = [];
 
 // ==========================================
-// 1. PEDIDOS COM FILTRO & ORDENAÇÃO
+// 1. ORDERS
 // ==========================================
 async function loadOrders() {
     const tbody = document.getElementById('admin-orders-list');
@@ -41,6 +41,8 @@ async function loadOrders() {
 
 function filterOrders() {
     const tbody = document.getElementById('admin-orders-list');
+    if (!tbody) return;
+
     const search = document.getElementById('filter-order-search')?.value.toLowerCase() || "";
     const status = document.getElementById('filter-order-status')?.value || "";
     const sort = document.getElementById('filter-order-sort')?.value || "newest";
@@ -51,7 +53,6 @@ function filterOrders() {
         return matchesSearch && matchesStatus;
     });
 
-    // Ordenação
     filtered.sort((a, b) => {
         if (sort === "highest") return (b.totalAmount || 0) - (a.totalAmount || 0);
         if (sort === "lowest") return (a.totalAmount || 0) - (b.totalAmount || 0);
@@ -101,7 +102,7 @@ async function updateOrderStatus(orderId, newStatus) {
 }
 
 // ==========================================
-// 2. CLIENTES COM BUSCA
+// 2. CUSTOMERS
 // ==========================================
 async function loadCustomers() {
     try {
@@ -116,6 +117,8 @@ async function loadCustomers() {
 
 function filterCustomers() {
     const tbody = document.getElementById('admin-customers-list');
+    if (!tbody) return;
+
     const search = document.getElementById('filter-customer-search')?.value.toLowerCase() || "";
 
     const filtered = rawCustomers.filter(c => {
@@ -144,7 +147,7 @@ function filterCustomers() {
 }
 
 // ==========================================
-// 3. CUPONS COM FILTRO
+// 3. COUPONS
 // ==========================================
 async function saveCoupon(e) {
     e.preventDefault();
@@ -183,6 +186,8 @@ async function loadCoupons() {
 
 function filterCoupons() {
     const tbody = document.getElementById('admin-coupons-list');
+    if (!tbody) return;
+
     const search = document.getElementById('filter-coupon-search')?.value.toLowerCase() || "";
     const status = document.getElementById('filter-coupon-status')?.value || "";
 
@@ -214,7 +219,7 @@ function filterCoupons() {
 }
 
 // ==========================================
-// 4. COMISSÕES COM BUSCA
+// 4. COMMISSIONS
 // ==========================================
 async function loadCommissions() {
     try {
@@ -229,6 +234,8 @@ async function loadCommissions() {
 
 function filterCommissions() {
     const tbody = document.getElementById('admin-commissions-list');
+    if (!tbody) return;
+
     const search = document.getElementById('filter-commission-search')?.value.toLowerCase() || "";
 
     const filtered = rawCommissions.filter(com => {
@@ -256,7 +263,7 @@ function filterCommissions() {
 }
 
 // ==========================================
-// 5. PRODUTOS CSV
+// 5. PRODUCTS CSV
 // ==========================================
 async function loadProducts() {
     try {
@@ -291,6 +298,8 @@ function parseCSV(text) {
 
 function filterProducts() {
     const tbody = document.getElementById('admin-products-list');
+    if (!tbody) return;
+
     const search = document.getElementById('filter-product-search')?.value.toLowerCase() || "";
 
     const filtered = rawProducts.filter(p => {
@@ -351,7 +360,7 @@ function escapeHTML(str) {
     })[m]);
 }
 
-// Exposições Globais
+// Window Globals
 window.saveCoupon = saveCoupon;
 window.loadOrders = loadOrders;
 window.updateOrderStatus = updateOrderStatus;
