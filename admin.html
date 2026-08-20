@@ -3,206 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Administrativo - Fios Perfeitos</title>
-    <!-- Bootstrap 5 CSS -->
+    <title>Painel Administrativo | Fios Perfeitos</title>
+    <!-- Google Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom Styles / Identidade Fios Perfeitos -->
+    
     <style>
         :root {
-            --fp-dark: #121212;
-            --fp-gold: #d4af37;
-            --fp-gold-hover: #b89628;
-            --fp-card-bg: #1e1e1e;
+            --fp-primary: #121212;
+            --fp-accent: #D4AF37;
+            --fp-accent-light: #fbf7e8;
+            --fp-bg: #f8f9fa;
+            --fp-card-border: #edf2f7;
+            --fp-sidebar-width: 260px;
         }
+
         body {
-            background-color: #f4f6f9;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--fp-bg);
+            color: #2d3748;
         }
-        .navbar-fp {
-            background-color: var(--fp-dark);
-            border-bottom: 2px solid var(--fp-gold);
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: var(--fp-sidebar-width);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: var(--fp-primary);
+            color: #fff;
+            padding: 1.5rem 1rem;
+            z-index: 1000;
         }
-        .navbar-fp .navbar-brand {
-            color: var(--fp-gold);
+
+        .sidebar-brand {
+            font-size: 1.25rem;
             font-weight: 700;
-            letter-spacing: 0.5px;
+            color: var(--fp-accent);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            padding: 0 0.5rem;
         }
-        .nav-tabs .nav-link {
-            color: #495057;
-            border: none;
-            border-bottom: 3px solid transparent;
+
+        .sidebar .nav-link {
+            color: #a0aec0;
+            font-weight: 500;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar .nav-link:hover, 
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: rgba(212, 175, 55, 0.15);
+        }
+
+        .sidebar .nav-link.active {
+            color: var(--fp-accent);
             font-weight: 600;
         }
-        .nav-tabs .nav-link.active {
-            color: var(--fp-gold);
-            border-color: var(--fp-gold);
-            background: transparent;
+
+        /* Main Content Layout */
+        .main-wrapper {
+            margin-left: var(--fp-sidebar-width);
+            padding: 2rem;
         }
-        .btn-gold {
-            background-color: var(--fp-gold);
-            color: #fff;
-            font-weight: 600;
-            border: none;
-        }
-        .btn-gold:hover {
-            background-color: var(--fp-gold-hover);
-            color: #fff;
-        }
+
         .card-custom {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            background: #fff;
+            border: 1px solid var(--fp-card-border);
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
-        .badge-status-pago { background-color: #198754; }
-        .badge-status-pendente { background-color: #ffc107; color: #000; }
-        .badge-status-enviado { background-color: #0d6efd; }
-        .badge-status-cancelado { background-color: #dc3545; }
+
+        .stat-card {
+            padding: 1.25rem;
+            border-radius: 12px;
+            background: #fff;
+            border: 1px solid var(--fp-card-border);
+        }
+
+        .btn-accent {
+            background-color: var(--fp-accent);
+            color: #000;
+            font-weight: 600;
+            border: none;
+        }
+
+        .btn-accent:hover {
+            background-color: #b89628;
+            color: #fff;
+        }
+
+        .table thead th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+            color: #718096;
+            background-color: #f7fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .badge-status {
+            font-weight: 600;
+            padding: 0.35em 0.65em;
+            border-radius: 6px;
+        }
     </style>
 </head>
 <body>
 
-    <!-- Header / Navbar -->
-    <nav class="navbar navbar-fp navbar-dark mb-4 shadow">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="#">
-                <i class="fa fa-crown me-2"></i> Fios Perfeitos <span class="badge bg-secondary ms-2 fs-6">Admin</span>
+    <!-- Sidebar Navegação Lateral -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fa-solid fa-crown"></i>
+            <span>Fios Perfeitos</span>
+        </div>
+        <nav class="nav flex-column" id="adminTabs" role="tablist">
+            <a class="nav-link active" id="orders-tab" data-bs-toggle="tab" href="#orders-panel">
+                <i class="fa-solid fa-bag-shopping"></i> Pedidos
             </a>
-            <a href="index.html" class="btn btn-outline-light btn-sm rounded-pill px-3">
-                <i class="fa fa-store me-1"></i> Ver Loja
+            <a class="nav-link" id="customers-tab" data-bs-toggle="tab" href="#customers-panel">
+                <i class="fa-solid fa-users"></i> Clientes
+            </a>
+            <a class="nav-link" id="coupons-tab" data-bs-toggle="tab" href="#coupons-panel">
+                <i class="fa-solid fa-ticket"></i> Cupons & Afiliados
+            </a>
+            <a class="nav-link" id="commissions-tab" data-bs-toggle="tab" href="#commissions-panel">
+                <i class="fa-solid fa-hand-holding-dollar"></i> Comissões
+            </a>
+            <a class="nav-link" id="products-tab" data-bs-toggle="tab" href="#products-panel">
+                <i class="fa-solid fa-box"></i> Catálogo (CSV)
+            </a>
+        </nav>
+        <div class="mt-auto pt-4 border-top border-secondary">
+            <a href="index.html" class="btn btn-outline-light btn-sm w-100">
+                <i class="fa-solid fa-store me-2"></i>Ver Loja
             </a>
         </div>
-    </nav>
+    </aside>
 
-    <div class="container mb-5">
-        <!-- Navegação por Abas -->
-        <ul class="nav nav-tabs mb-4 border-bottom" id="adminTabs" role="tablist">
-            <li class="nav-item">
-                <button class="nav-link active" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders-panel">
-                    <i class="fa fa-shopping-bag me-2"></i>Pedidos Realizados
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="customers-tab" data-bs-toggle="tab" data-bs-target="#customers-panel">
-                    <i class="fa fa-users me-2"></i>Clientes
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="coupons-tab" data-bs-toggle="tab" data-bs-target="#coupons-panel">
-                    <i class="fa fa-ticket-alt me-2"></i>Cupons & Afiliados
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="commissions-tab" data-bs-toggle="tab" data-bs-target="#commissions-panel">
-                    <i class="fa fa-hand-holding-usd me-2"></i>Comissões
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="products-tab" data-bs-toggle="tab" data-bs-target="#products-panel">
-                    <i class="fa fa-box me-2"></i>Catálogo & CSV
-                </button>
-            </li>
-        </ul>
-
+    <!-- Conteúdo Principal -->
+    <main class="main-wrapper">
         <div class="tab-content">
             
-            <!-- 1. ABA DE PEDIDOS -->
+            <!-- 1. PAINEL DE PEDIDOS -->
             <div class="tab-pane fade show active" id="orders-panel">
-                <div class="card card-custom p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold m-0"><i class="fa fa-receipt text-warning me-2"></i>Gerenciamento de Pedidos</h5>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="loadOrders()"><i class="fa fa-sync me-1"></i>Atualizar</button>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="fw-bold mb-1">Gerenciamento de Pedidos</h4>
+                        <p class="text-muted small mb-0">Acompanhe e atualize os status de compra dos clientes.</p>
                     </div>
+                    <button class="btn btn-sm btn-white border shadow-sm" onclick="loadOrders()">
+                        <i class="fa-solid fa-rotate me-1"></i> Atualizar
+                    </button>
+                </div>
+
+                <div class="card-custom p-4">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle small">
-                            <thead class="table-light">
+                        <table class="table table-hover align-middle small mb-0">
+                            <thead>
                                 <tr>
                                     <th>ID Pedido</th>
                                     <th>Data</th>
                                     <th>Cliente</th>
-                                    <th>Valor Total</th>
+                                    <th>Total</th>
                                     <th>Cupom</th>
-                                    <th>Status</th>
-                                    <th>Ações</th>
+                                    <th>Status do Pedido</th>
                                 </tr>
                             </thead>
                             <tbody id="admin-orders-list">
-                                <tr><td colspan="7" class="text-center text-muted">Carregando pedidos...</td></tr>
+                                <tr><td colspan="6" class="text-center py-4 text-muted">Carregando dados...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- 2. ABA DE CLIENTES -->
+            <!-- 2. PAINEL DE CLIENTES -->
             <div class="tab-pane fade" id="customers-panel">
-                <div class="card card-custom p-4">
-                    <h5 class="fw-bold mb-3"><i class="fa fa-user-check text-primary me-2"></i>Clientes Cadastrados</h5>
+                <h4 class="fw-bold mb-1">Clientes Cadastrados</h4>
+                <p class="text-muted small mb-4">Base de usuários registrados na plataforma.</p>
+                <div class="card-custom p-4">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle small">
-                            <thead class="table-light">
+                        <table class="table table-hover align-middle small mb-0">
+                            <thead>
                                 <tr>
                                     <th>Nome</th>
                                     <th>E-mail</th>
-                                    <th>Telefone/WhatsApp</th>
+                                    <th>Telefone</th>
                                     <th>Cidade/UF</th>
-                                    <th>Data Cadastro</th>
+                                    <th>Cadastro</th>
                                 </tr>
                             </thead>
                             <tbody id="admin-customers-list">
-                                <tr><td colspan="5" class="text-center text-muted">Carregando clientes...</td></tr>
+                                <tr><td colspan="5" class="text-center py-4 text-muted">Carregando clientes...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- 3. ABA DE CUPONS & AFILIADOS -->
+            <!-- 3. PAINEL DE CUPONS -->
             <div class="tab-pane fade" id="coupons-panel">
+                <h4 class="fw-bold mb-4">Cupons & Afiliados</h4>
                 <div class="row g-4">
                     <div class="col-md-4">
-                        <div class="card card-custom p-4">
-                            <h5 class="fw-bold mb-3"><i class="fa fa-plus-circle text-success me-2"></i>Novo Cupom</h5>
+                        <div class="card-custom p-4">
+                            <h6 class="fw-bold mb-3">Novo Cupom</h6>
                             <form id="form-coupon" onsubmit="saveCoupon(event)">
-                                <div class="mb-2">
-                                    <label class="form-label small fw-bold">Código do Cupom</label>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Código</label>
                                     <input type="text" id="coup-code" class="form-control form-control-sm text-uppercase" required placeholder="EX: SHINE10">
                                 </div>
-                                <div class="row g-2 mb-2">
+                                <div class="row g-2 mb-3">
                                     <div class="col-6">
                                         <label class="form-label small fw-bold">Tipo</label>
                                         <select id="coup-type" class="form-select form-select-sm">
-                                            <option value="percent">Porcentagem (%)</option>
-                                            <option value="fixed">Valor Fixo (R$)</option>
+                                            <option value="percent">% Desconto</option>
+                                            <option value="fixed">R$ Fixo</option>
                                         </select>
                                     </div>
                                     <div class="col-6">
-                                        <label class="form-label small fw-bold">Desconto</label>
+                                        <label class="form-label small fw-bold">Valor</label>
                                         <input type="number" step="0.01" id="coup-value" class="form-control form-control-sm" required placeholder="10">
                                     </div>
                                 </div>
-                                <div class="mb-2">
-                                    <label class="form-label small fw-bold">Comissão do Afiliado (%)</label>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Comissão Afiliado (%)</label>
                                     <input type="number" step="0.1" id="coup-commission" class="form-control form-control-sm" placeholder="Ex: 5">
                                 </div>
-                                <div class="mb-2">
-                                    <label class="form-label small fw-bold">Nome do Afiliado</label>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Nome Afiliado</label>
                                     <input type="text" id="coup-affiliate" class="form-control form-control-sm" placeholder="Ex: Roberto Ferreira">
                                 </div>
-                                <button type="submit" class="btn btn-gold btn-sm w-100 fw-bold mt-2">
-                                    <i class="fa fa-save me-1"></i>Salvar Cupom
-                                </button>
+                                <button type="submit" class="btn btn-accent btn-sm w-100 mt-2">Salvar Cupom</button>
                             </form>
                         </div>
                     </div>
-
                     <div class="col-md-8">
-                        <div class="card card-custom p-4">
-                            <h5 class="fw-bold mb-3">Cupons Ativos</h5>
+                        <div class="card-custom p-4">
+                            <h6 class="fw-bold mb-3">Cupons Ativos</h6>
                             <div class="table-responsive">
-                                <table class="table table-hover align-middle small">
-                                    <thead class="table-light">
+                                <table class="table table-hover align-middle small mb-0">
+                                    <thead>
                                         <tr>
                                             <th>Código</th>
                                             <th>Tipo</th>
@@ -213,7 +267,7 @@
                                         </tr>
                                     </thead>
                                     <tbody id="admin-coupons-list">
-                                        <tr><td colspan="6" class="text-center text-muted">Carregando cupons...</td></tr>
+                                        <tr><td colspan="6" class="text-center py-4 text-muted">Carregando cupons...</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -222,111 +276,64 @@
                 </div>
             </div>
 
-            <!-- 4. ABA DE COMISSÕES DE AFILIADOS -->
+            <!-- 4. PAINEL DE COMISSÕES -->
             <div class="tab-pane fade" id="commissions-panel">
-                <div class="card card-custom p-4">
-                    <h5 class="fw-bold mb-3"><i class="fa fa-percentage text-warning me-2"></i>Comissões Geradas</h5>
+                <h4 class="fw-bold mb-1">Comissões Geradas</h4>
+                <p class="text-muted small mb-4">Relatório de valores devidos a afiliados por cupom utilizado.</p>
+                <div class="card-custom p-4">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle small">
-                            <thead class="table-light">
+                        <table class="table table-hover align-middle small mb-0">
+                            <thead>
                                 <tr>
                                     <th>Afiliado</th>
                                     <th>Cupom Usado</th>
-                                    <th>Valor do Pedido</th>
+                                    <th>Valor Pedido</th>
                                     <th>Comissão (%)</th>
                                     <th>Valor Comissão</th>
                                     <th>Data</th>
                                 </tr>
                             </thead>
                             <tbody id="admin-commissions-list">
-                                <tr><td colspan="6" class="text-center text-muted">Carregando comissões...</td></tr>
+                                <tr><td colspan="6" class="text-center py-4 text-muted">Carregando comissões...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- 5. ABA DE PRODUTOS & CATÁLOGO -->
+            <!-- 5. PAINEL DE PRODUTOS -->
             <div class="tab-pane fade" id="products-panel">
-                <div class="row g-4">
-                    <div class="col-md-4">
-                        <div class="card card-custom p-4">
-                            <h5 class="fw-bold mb-3"><i class="fa fa-plus-circle me-2 text-primary"></i>Novo Produto</h5>
-                            <form id="form-product" onsubmit="saveProduct(event)">
-                                <div class="mb-2">
-                                    <label class="form-label small fw-bold">SKU</label>
-                                    <input type="text" id="prod-sku" class="form-control form-control-sm" required placeholder="Ex: SH-001">
-                                </div>
-                                <div class="mb-2">
-                                    <label class="form-label small fw-bold">Produto</label>
-                                    <input type="text" id="prod-name" class="form-control form-control-sm" required>
-                                </div>
-                                <div class="row g-2 mb-2">
-                                    <div class="col-6">
-                                        <label class="form-label small fw-bold">Preço (R$)</label>
-                                        <input type="number" step="0.01" id="prod-price" class="form-control form-control-sm" required placeholder="0.00">
-                                    </div>
-                                    <div class="col-6">
-                                        <label class="form-label small fw-bold">Peso</label>
-                                        <input type="text" id="prod-weight" class="form-control form-control-sm" placeholder="Ex: 500g">
-                                    </div>
-                                </div>
-                                <div class="row g-2 mb-2">
-                                    <div class="col-6">
-                                        <label class="form-label small fw-bold">Categoria</label>
-                                        <input type="text" id="prod-category" class="form-control form-control-sm" required placeholder="Ex: Shampoos">
-                                    </div>
-                                    <div class="col-6">
-                                        <label class="form-label small fw-bold">Estoque</label>
-                                        <input type="number" id="prod-stock" class="form-control form-control-sm" required value="10">
-                                    </div>
-                                </div>
-                                <div class="mb-2">
-                                    <label class="form-label small fw-bold">Caminho da Imagem</label>
-                                    <input type="text" id="prod-image" class="form-control form-control-sm" placeholder="images/products/exemplo.jpg">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label small fw-bold">Descrição</label>
-                                    <textarea id="prod-desc" class="form-control form-control-sm" rows="2"></textarea>
-                                </div>
-                                <button type="submit" class="btn btn-dark btn-sm w-100 fw-bold">
-                                    <i class="fa fa-save me-1"></i>Adicionar Produto
-                                </button>
-                            </form>
-                        </div>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="fw-bold mb-1">Catálogo e CSV</h4>
+                        <p class="text-muted small mb-0">Edite a lista local de produtos e baixe o arquivo atualizado.</p>
                     </div>
-
-                    <div class="col-md-8">
-                        <div class="card card-custom p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="fw-bold mb-0">Catálogo Local (CSV)</h5>
-                                <button class="btn btn-success btn-sm fw-bold" onclick="exportCSV()">
-                                    <i class="fa fa-download me-1"></i>Baixar CSV Atualizado
-                                </button>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle small">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>SKU</th>
-                                            <th>Produto</th>
-                                            <th>Preço (R$)</th>
-                                            <th>Estoque</th>
-                                            <th>Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="admin-products-list">
-                                        <!-- Renderizado via JS -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                    <button class="btn btn-sm btn-dark" onclick="exportCSV()">
+                        <i class="fa-solid fa-download me-1"></i> Baixar CSV
+                    </button>
+                </div>
+                <div class="card-custom p-4">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle small mb-0">
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th>Produto</th>
+                                    <th>Preço (R$)</th>
+                                    <th>Estoque</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-products-list">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
         </div>
-    </div>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="./js/admin.js"></script>
