@@ -12,7 +12,7 @@ import {
     where 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Configurações de Paginação e Armazenamento
+// Configurações e Estado
 const PAGE_SIZE = 20;
 let lastVisibleOrder = null;
 let rawOrders = [];
@@ -22,123 +22,7 @@ let rawCommissions = [];
 let rawProducts = [];
 
 // ==========================================
-// GESTÃO DE CUPONS (COM CHAVE PIX)
-// ==========================================
-async function saveCoupon(e) {
-    e.preventDefault();
-
-    const codeInput = document.getElementById('coup-code').value.trim();
-    const normalizedCode = codeInput.toLowerCase();
-
-    const couponData = {
-        code: codeInput.toUpperCase(),
-        type: document.getElementById('coup-type').value,
-        value: parseFloat(document.getElementById('coup-value').value) || 0,
-        commissionPercent: parseFloat(document.getElementById('coup-commission').value) || 0,
-        affiliateName: document.getElementById('coup-affiliate').value.trim() || 'Geral',
-        pixKey: document.getElementById('coup-pix').value.trim() || 'Não informada',
-        active: true
-    };
-
-    try {
-        await setDoc(doc(db, "coupons", normalizedCode), couponData);
-        alert(`Cupom ${couponData.code} cadastrado com sucesso!`);
-        document.getElementById('form-coupon').reset();
-        loadCoupons();
-    } catch (err) {
-        console.error("Erro ao salvar cupom:", err);
-        alert("Erro ao salvar o cupom no Firebase.");
-    }
-}
-
-// ==========================================
-// GESTÃO DE COMISSÕES E PAGAMENTOS
-// ==========================================
-let rawCommissions = [];
-
-async function loadCommissions() {
-    const tbody = document.getElementById('admin-commissions-list');
-    if (!tbody) return;
-
-    try {
-        const querySnapshot = await getDocs(collection(db, "commissions"));
-        rawCommissions = [];
-        
-        querySnapshot.forEach(docSnap => {
-            rawCommissions.push({ id: docSnap.id, ...docSnap.data() });
-        });
-
-        filterCommissions();
-    } catch (err) {
-        console.error("Erro ao carregar comissões:", err);
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Erro ao carregar dados.</td></tr>`;
-    }
-}
-
-function filterCommissions() {
-    const tbody = document.getElementById('admin-commissions-list');
-    if (!tbody) return;
-
-    const search = document.getElementById('filter-comm-search')?.value.toLowerCase() || "";
-    const statusFilter = document.getElementById('filter-comm-status')?.value || "";
-
-    const filtered = rawCommissions.filter(com => {
-        const matchesSearch = (com.affiliateName || "").toLowerCase().includes(search) || 
-                              (com.code || "").toLowerCase().includes(search);
-        const matchesStatus = statusFilter === "" || (com.payoutStatus || "Pendente") === statusFilter;
-        return matchesSearch && matchesStatus;
-    });
-
-    if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Nenhuma comissão encontrada com os filtros aplicados.</td></tr>`;
-        return;
-    }
-
-    tbody.innerHTML = filtered.map(com => {
-        const date = com.createdAt?.toDate ? com.createdAt.toDate().toLocaleDateString('pt-BR') : '-';
-        const payoutStatus = com.payoutStatus || 'Pendente';
-        
-        return `
-            <tr>
-                <td><strong>${escapeHTML(com.affiliateName || 'Geral')}</strong></td>
-                <td>
-                    <span class="badge bg-light text-dark border">
-                        <i class="fa fa-key text-warning me-1"></i>${escapeHTML(com.pixKey || 'Não cadastrada')}
-                    </span>
-                </td>
-                <td><span class="badge bg-secondary">${escapeHTML(com.code || '-')}</span></td>
-                <td>R$ ${(com.orderTotal || 0).toFixed(2)}</td>
-                <td class="text-success fw-bold">R$ ${(com.commissionValue || 0).toFixed(2)} (${com.commissionPercent || 0}%)</td>
-                <td>${date}</td>
-                <td>
-                    <select class="form-select form-select-sm ${payoutStatus === 'Pago' ? 'border-success text-success fw-bold' : 'border-warning'}" 
-                            onchange="updateCommissionPayoutStatus('${com.id}', this.value)">
-                        <option value="Pendente" ${payoutStatus === 'Pendente' ? 'selected' : ''}>Pendente</option>
-                        <option value="Pago" ${payoutStatus === 'Pago' ? 'selected' : ''}>Pago</option>
-                    </select>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
-
-async function updateCommissionPayoutStatus(commId, newStatus) {
-    try {
-        await updateDoc(doc(db, "commissions", commId), { payoutStatus: newStatus });
-        const item = rawCommissions.find(c => c.id === commId);
-        if (item) item.payoutStatus = newStatus;
-        alert(`Status de pagamento atualizado para: ${newStatus}`);
-    } catch (err) {
-        console.error("Erro ao atualizar status do pagamento:", err);
-        alert("Erro ao atualizar status no Firebase.");
-    }
-}
-
-// Expor funções globalmente
-window.filterCommissions = filterCommissions;
-window.updateCommissionPayoutStatus = updateCommissionPayoutStatus;
-// ==========================================
-// 1. PEDIDOS (PAGINADO COM LIMIT 20)
+// 1. PEDIDOS
 // ==========================================
 async function loadOrders(isInitial = true) {
     const tbody = document.getElementById('admin-orders-list');
@@ -146,7 +30,6 @@ async function loadOrders(isInitial = true) {
 
     try {
         const selectedStatus = document.getElementById('filter-order-status')?.value || "";
-        
         let queryConstraints = [collection(db, "orders")];
 
         if (selectedStatus !== "") {
@@ -176,9 +59,7 @@ async function loadOrders(isInitial = true) {
         lastVisibleOrder = querySnapshot.docs[querySnapshot.docs.length - 1];
 
         if (isInitial) rawOrders = [];
-        querySnapshot.forEach(docSnap => {
-            rawOrders.push({ id: docSnap.id, ...docSnap.data() });
-        });
+        querySnapshot.forEach(docSnap => rawOrders.push({ id: docSnap.id, ...docSnap.data() }));
 
         renderOrdersTable();
     } catch (err) {
@@ -231,7 +112,7 @@ function filterOrders() {
 
 async function updateOrderStatus(orderId, newStatus) {
     try {
-        await updateDoc(doc(db, "orders", orderId), { status: newStatus });
+        await updateDoc(doc(doc(db, "orders", orderId)), { status: newStatus });
         const item = rawOrders.find(o => o.id === orderId);
         if (item) item.status = newStatus;
         alert(`Status atualizado para ${newStatus}!`);
@@ -300,16 +181,18 @@ async function saveCoupon(e) {
         value: parseFloat(document.getElementById('coup-value').value) || 0,
         commissionPercent: parseFloat(document.getElementById('coup-commission').value) || 0,
         affiliateName: document.getElementById('coup-affiliate').value.trim() || 'Geral',
+        pixKey: document.getElementById('coup-pix').value.trim() || 'Não informada',
         active: true
     };
 
     try {
         await setDoc(doc(db, "coupons", normalizedCode), couponData);
-        alert(`Cupom ${couponData.code} cadastrado!`);
+        alert(`Cupom ${couponData.code} cadastrado com sucesso!`);
         document.getElementById('form-coupon').reset();
         loadCoupons();
     } catch (err) {
         console.error("Erro ao salvar cupom:", err);
+        alert("Erro ao salvar o cupom no Firebase.");
     }
 }
 
@@ -359,17 +242,23 @@ function filterCoupons() {
 }
 
 // ==========================================
-// 4. COMISSÕES
+// 4. COMISSÕES E PAGAMENTOS
 // ==========================================
 async function loadCommissions() {
+    const tbody = document.getElementById('admin-commissions-list');
+    if (!tbody) return;
+
     try {
-        const q = query(collection(db, "commissions"), limit(50));
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await getDocs(collection(db, "commissions"));
         rawCommissions = [];
-        querySnapshot.forEach(docSnap => rawCommissions.push(docSnap.data()));
+        querySnapshot.forEach(docSnap => {
+            rawCommissions.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
         filterCommissions();
     } catch (err) {
         console.error("Erro ao carregar comissões:", err);
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Erro ao carregar dados.</td></tr>`;
     }
 }
 
@@ -377,34 +266,63 @@ function filterCommissions() {
     const tbody = document.getElementById('admin-commissions-list');
     if (!tbody) return;
 
-    const search = document.getElementById('filter-commission-search')?.value.toLowerCase() || "";
+    const search = document.getElementById('filter-comm-search')?.value.toLowerCase() || "";
+    const statusFilter = document.getElementById('filter-comm-status')?.value || "";
 
     const filtered = rawCommissions.filter(com => {
-        return (com.affiliateName || "").toLowerCase().includes(search) || (com.code || "").toLowerCase().includes(search);
+        const matchesSearch = (com.affiliateName || "").toLowerCase().includes(search) || 
+                              (com.code || "").toLowerCase().includes(search);
+        const matchesStatus = statusFilter === "" || (com.payoutStatus || "Pendente") === statusFilter;
+        return matchesSearch && matchesStatus;
     });
 
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Nenhuma comissão encontrada.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Nenhuma comissão encontrada.</td></tr>`;
         return;
     }
 
     tbody.innerHTML = filtered.map(com => {
         const date = com.createdAt?.toDate ? com.createdAt.toDate().toLocaleDateString('pt-BR') : '-';
+        const payoutStatus = com.payoutStatus || 'Pendente';
+        
         return `
             <tr>
                 <td><strong>${escapeHTML(com.affiliateName || 'Geral')}</strong></td>
+                <td>
+                    <span class="badge bg-light text-dark border">
+                        <i class="fa fa-key text-warning me-1"></i>${escapeHTML(com.pixKey || 'Não cadastrada')}
+                    </span>
+                </td>
                 <td><span class="badge bg-secondary">${escapeHTML(com.code || '-')}</span></td>
                 <td>R$ ${(com.orderTotal || 0).toFixed(2)}</td>
-                <td>${com.commissionPercent || 0}%</td>
-                <td class="text-success fw-bold">R$ ${(com.commissionValue || 0).toFixed(2)}</td>
+                <td class="text-success fw-bold">R$ ${(com.commissionValue || 0).toFixed(2)} (${com.commissionPercent || 0}%)</td>
                 <td>${date}</td>
+                <td>
+                    <select class="form-select form-select-sm ${payoutStatus === 'Pago' ? 'border-success text-success fw-bold' : 'border-warning'}" 
+                            onchange="updateCommissionPayoutStatus('${com.id}', this.value)">
+                        <option value="Pendente" ${payoutStatus === 'Pendente' ? 'selected' : ''}>Pendente</option>
+                        <option value="Pago" ${payoutStatus === 'Pago' ? 'selected' : ''}>Pago</option>
+                    </select>
+                </td>
             </tr>
         `;
     }).join('');
 }
 
+async function updateCommissionPayoutStatus(commId, newStatus) {
+    try {
+        await updateDoc(doc(db, "commissions", commId), { payoutStatus: newStatus });
+        const item = rawCommissions.find(c => c.id === commId);
+        if (item) item.payoutStatus = newStatus;
+        alert(`Status de pagamento atualizado para: ${newStatus}`);
+    } catch (err) {
+        console.error("Erro ao atualizar status do pagamento:", err);
+        alert("Erro ao atualizar status no Firebase.");
+    }
+}
+
 // ==========================================
-// 5. PRODUTOS CSV
+// 5. CATÁLOGO / CSV
 // ==========================================
 async function loadProducts() {
     try {
@@ -501,15 +419,24 @@ function escapeHTML(str) {
     })[m]);
 }
 
-// Exposições Globais
-window.saveCoupon = saveCoupon;
+// EXPOSIÇÃO GLOBAL DE FUNÇÕES (Corrige o erro de "ReferenceError: function is not defined")
 window.loadOrders = loadOrders;
 window.loadMoreOrders = () => loadOrders(false);
 window.updateOrderStatus = updateOrderStatus;
 window.filterOrders = filterOrders;
+
+window.loadCustomers = loadCustomers;
 window.filterCustomers = filterCustomers;
+
+window.saveCoupon = saveCoupon;
+window.loadCoupons = loadCoupons;
 window.filterCoupons = filterCoupons;
+
+window.loadCommissions = loadCommissions;
 window.filterCommissions = filterCommissions;
+window.updateCommissionPayoutStatus = updateCommissionPayoutStatus;
+
+window.loadProducts = loadProducts;
 window.filterProducts = filterProducts;
 window.updateProductField = updateProductField;
 window.deleteProduct = deleteProduct;
