@@ -7,15 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
-        :root {
-            --fp-primary: #121212;
-            --fp-accent: #D4AF37;
-            --fp-bg: #f8f9fa;
-            --fp-card-border: #edf2f7;
-            --fp-sidebar-width: 260px;
-        }
+        :root { --fp-primary: #121212; --fp-accent: #D4AF37; --fp-bg: #f8f9fa; --fp-card-border: #edf2f7; --fp-sidebar-width: 260px; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--fp-bg); color: #2d3748; }
         .sidebar { width: var(--fp-sidebar-width); height: 100vh; position: fixed; top: 0; left: 0; background-color: var(--fp-primary); color: #fff; padding: 1.5rem 1rem; z-index: 1000; }
         .sidebar-brand { font-size: 1.25rem; font-weight: 700; color: var(--fp-accent); display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem; }
@@ -25,24 +18,18 @@
         .main-wrapper { margin-left: var(--fp-sidebar-width); padding: 2rem; }
         .card-custom { background: #fff; border: 1px solid var(--fp-card-border); border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .filter-bar { background-color: #f7fafc; padding: 1rem; border-radius: 8px; margin-bottom: 1.25rem; border: 1px solid #e2e8f0; }
-        .btn-accent { background-color: var(--fp-accent); color: #000; font-weight: 600; border: none; }
-        .btn-accent:hover { background-color: #b89628; color: #fff; }
-        .table thead th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: #718096; background-color: #f7fafc; }
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
-        <div class="sidebar-brand">
-            <i class="fa-solid fa-crown"></i>
-            <span>Fios Perfeitos</span>
-        </div>
+        <div class="sidebar-brand"><i class="fa-solid fa-crown"></i> <span>Fios Perfeitos</span></div>
         <nav class="nav flex-column" id="adminTabs" role="tablist">
-            <a class="nav-link active" id="orders-tab" data-bs-toggle="tab" href="#orders-panel"><i class="fa-solid fa-bag-shopping"></i> Pedidos</a>
-            <a class="nav-link" id="customers-tab" data-bs-toggle="tab" href="#customers-panel"><i class="fa-solid fa-users"></i> Clientes</a>
-            <a class="nav-link" id="coupons-tab" data-bs-toggle="tab" href="#coupons-panel"><i class="fa-solid fa-ticket"></i> Cupons</a>
-            <a class="nav-link" id="commissions-tab" data-bs-toggle="tab" href="#commissions-panel"><i class="fa-solid fa-hand-holding-dollar"></i> Comissões</a>
-            <a class="nav-link" id="products-tab" data-bs-toggle="tab" href="#products-panel"><i class="fa-solid fa-box"></i> Catálogo (CSV)</a>
+            <a class="nav-link active" data-bs-toggle="tab" href="#orders-panel"><i class="fa-solid fa-bag-shopping"></i> Pedidos</a>
+            <a class="nav-link" data-bs-toggle="tab" href="#customers-panel"><i class="fa-solid fa-users"></i> Clientes</a>
+            <a class="nav-link" data-bs-toggle="tab" href="#coupons-panel"><i class="fa-solid fa-ticket"></i> Cupons</a>
+            <a class="nav-link" data-bs-toggle="tab" href="#commissions-panel"><i class="fa-solid fa-hand-holding-dollar"></i> Comissões</a>
+            <a class="nav-link" data-bs-toggle="tab" href="#products-panel"><i class="fa-solid fa-box"></i> Catálogo (CSV)</a>
         </nav>
         <div class="mt-auto pt-4 border-top border-secondary">
             <a href="index.html" class="btn btn-outline-light btn-sm w-100"><i class="fa-solid fa-store me-2"></i>Ver Loja</a>
@@ -58,9 +45,7 @@
                     <h4 class="fw-bold m-0">Gerenciamento de Pedidos</h4>
                     <button class="btn btn-sm btn-white border" onclick="loadOrders()"><i class="fa-solid fa-rotate me-1"></i> Atualizar</button>
                 </div>
-                
                 <div class="card-custom p-4">
-                    <!-- BARRA DE FILTROS - PEDIDOS -->
                     <div class="filter-bar row g-2 align-items-center">
                         <div class="col-md-4">
                             <input type="text" id="filter-order-search" class="form-control form-control-sm" placeholder="Buscar por cliente ou ID..." oninput="filterOrders()">
@@ -74,16 +59,7 @@
                                 <option value="Cancelado">Cancelado</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
-                            <select id="filter-order-sort" class="form-select form-select-sm" onchange="filterOrders()">
-                                <option value="newest">Mais recentes primeiro</option>
-                                <option value="oldest">Mais antigos primeiro</option>
-                                <option value="highest">Maior valor</option>
-                                <option value="lowest">Menor valor</option>
-                            </select>
-                        </div>
                     </div>
-
                     <div class="table-responsive">
                         <table class="table table-hover align-middle small mb-0">
                             <thead>
@@ -101,6 +77,9 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="text-center mt-3">
+                        <button class="btn btn-outline-primary btn-sm" onclick="loadMoreOrders()">Carregar Mais Pedidos</button>
+                    </div>
                 </div>
             </div>
 
@@ -108,13 +87,11 @@
             <div class="tab-pane fade" id="customers-panel">
                 <h4 class="fw-bold mb-3">Clientes Cadastrados</h4>
                 <div class="card-custom p-4">
-                    <!-- BARRA DE FILTROS - CLIENTES -->
                     <div class="filter-bar row g-2 align-items-center">
                         <div class="col-md-6">
                             <input type="text" id="filter-customer-search" class="form-control form-control-sm" placeholder="Buscar por nome, e-mail ou cidade..." oninput="filterCustomers()">
                         </div>
                     </div>
-
                     <div class="table-responsive">
                         <table class="table table-hover align-middle small mb-0">
                             <thead>
@@ -125,9 +102,6 @@
                                     <th>Cidade/UF</th>
                                     <th>Cadastro</th>
                                 </tr>
-                                <button class="btn btn-outline-primary btn-sm mt-2" onclick="loadMoreOrders()">
-                                    Carregar Mais Pedidos
-                                    </button>
                             </thead>
                             <tbody id="admin-customers-list">
                                 <tr><td colspan="5" class="text-center py-4 text-muted">Carregando clientes...</td></tr>
@@ -138,109 +112,131 @@
             </div>
 
             <!-- 3. CUPONS -->
-            <form id="form-coupon" onsubmit="saveCoupon(event)">
-    <div class="mb-2">
-        <label class="form-label small fw-bold">Código do Cupom</label>
-        <input type="text" id="coup-code" class="form-control form-control-sm text-uppercase" required placeholder="EX: SHINE10">
-    </div>
-    <div class="row g-2 mb-2">
-        <div class="col-6">
-            <label class="form-label small fw-bold">Tipo</label>
-            <select id="coup-type" class="form-select form-select-sm">
-                <option value="percent">Porcentagem (%)</option>
-                <option value="fixed">Valor Fixo (R$)</option>
-            </select>
-        </div>
-        <div class="col-6">
-            <label class="form-label small fw-bold">Desconto</label>
-            <input type="number" step="0.01" id="coup-value" class="form-control form-control-sm" required placeholder="10">
-        </div>
-    </div>
-    <div class="mb-2">
-        <label class="form-label small fw-bold">Comissão do Afiliado (%)</label>
-        <input type="number" step="0.1" id="coup-commission" class="form-control form-control-sm" placeholder="Ex: 5">
-    </div>
-    <div class="mb-2">
-        <label class="form-label small fw-bold">Nome do Proprietário/Afiliado</label>
-        <input type="text" id="coup-affiliate" class="form-control form-control-sm" required placeholder="Ex: Roberto Ferreira">
-    </div>
-    <div class="mb-2">
-        <label class="form-label small fw-bold">Chave PIX do Afiliado</label>
-        <input type="text" id="coup-pix" class="form-control form-control-sm" required placeholder="CPF, E-mail, Celular ou Aleatória">
-    </div>
-    <button type="submit" class="btn btn-gold btn-sm w-100 fw-bold mt-2">
-        <i class="fa fa-save me-1"></i>Salvar Cupom
-    </button>
-</form>
+            <div class="tab-pane fade" id="coupons-panel">
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="card-custom p-3">
+                            <h6 class="fw-bold mb-3">Novo Cupom</h6>
+                            <form id="form-coupon" onsubmit="saveCoupon(event)">
+                                <div class="mb-2">
+                                    <label class="form-label small fw-bold">Código do Cupom</label>
+                                    <input type="text" id="coup-code" class="form-control form-control-sm text-uppercase" required placeholder="EX: SHINE10">
+                                </div>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold">Tipo</label>
+                                        <select id="coup-type" class="form-select form-select-sm">
+                                            <option value="percent">Porcentagem (%)</option>
+                                            <option value="fixed">Valor Fixo (R$)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold">Desconto</label>
+                                        <input type="number" step="0.01" id="coup-value" class="form-control form-control-sm" required placeholder="10">
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small fw-bold">Comissão Afiliado (%)</label>
+                                    <input type="number" step="0.1" id="coup-commission" class="form-control form-control-sm" placeholder="Ex: 5">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small fw-bold">Proprietário/Afiliado</label>
+                                    <input type="text" id="coup-affiliate" class="form-control form-control-sm" required placeholder="Ex: Roberto Ferreira">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small fw-bold">Chave PIX do Afiliado</label>
+                                    <input type="text" id="coup-pix" class="form-control form-control-sm" required placeholder="CPF, E-mail ou Celular">
+                                </div>
+                                <button type="submit" class="btn btn-dark btn-sm w-100 fw-bold mt-2"><i class="fa fa-save me-1"></i>Salvar Cupom</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card-custom p-3">
+                            <h6 class="fw-bold mb-3">Cupons Cadastrados</h6>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle small mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Código</th>
+                                            <th>Tipo</th>
+                                            <th>Valor</th>
+                                            <th>Afiliado</th>
+                                            <th>Comissão</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-coupons-list">
+                                        <tr><td colspan="6" class="text-center py-3 text-muted">Carregando cupons...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- 4. COMISSÕES -->
-           <div class="tab-pane fade" id="commissions-panel">
-    <div class="card card-custom p-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold m-0"><i class="fa fa-hand-holding-usd text-warning me-2"></i>Gestão de Pagamentos de Comissões</h5>
-            <button class="btn btn-outline-secondary btn-sm" onclick="loadCommissions()"><i class="fa fa-sync me-1"></i>Atualizar</button>
-        </div>
-
-        <!-- Filtros Avançados -->
-        <div class="row g-2 mb-3">
-            <div class="col-md-4">
-                <input type="text" id="filter-comm-search" class="form-control form-control-sm" placeholder="Buscar por Afiliado ou Cupom..." oninput="filterCommissions()">
-            </div>
-            <div class="col-md-3">
-                <select id="filter-comm-status" class="form-select form-select-sm" onchange="filterCommissions()">
-                    <option value="">Todos os Status de Pagamento</option>
-                    <option value="Pendente">Pendente</option>
-                    <option value="Pago">Pago</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Tabela -->
-        <div class="table-responsive">
-            <table class="table table-hover align-middle small">
-                <thead class="table-light">
-                    <tr>
-                        <th>Afiliado</th>
-                        <th>Chave PIX</th>
-                        <th>Cupom</th>
-                        <th>Venda Total</th>
-                        <th>Comissão (R$)</th>
-                        <th>Data Venda</th>
-                        <th>Status PGTO</th>
-                    </tr>
-                </thead>
-                <tbody id="admin-commissions-list">
-                    <tr><td colspan="7" class="text-center text-muted">Carregando comissões...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-            <!-- 5. PRODUTOS CSV -->
-            <div class="tab-pane fade" id="products-panel">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="fw-bold m-0">Catálogo e CSV</h4>
-                    <button class="btn btn-sm btn-dark" onclick="exportCSV()"><i class="fa-solid fa-download me-1"></i> Baixar CSV</button>
-                </div>
-                <div class="card-custom p-4">
-                    <div class="filter-bar row g-2 align-items-center">
-                        <div class="col-md-6">
-                            <input type="text" id="filter-product-search" class="form-control form-control-sm" placeholder="Buscar por produto ou SKU..." oninput="filterProducts()">
+            <div class="tab-pane fade" id="commissions-panel">
+                <div class="card card-custom p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold m-0"><i class="fa fa-hand-holding-usd text-warning me-2"></i>Gestão de Pagamentos de Comissões</h5>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="loadCommissions()"><i class="fa fa-sync me-1"></i>Atualizar</button>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-4">
+                            <input type="text" id="filter-comm-search" class="form-control form-control-sm" placeholder="Buscar por Afiliado ou Cupom..." oninput="filterCommissions()">
+                        </div>
+                        <div class="col-md-3">
+                            <select id="filter-comm-status" class="form-select form-select-sm" onchange="filterCommissions()">
+                                <option value="">Todos os Status</option>
+                                <option value="Pendente">Pendente</option>
+                                <option value="Pago">Pago</option>
+                            </select>
                         </div>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle small mb-0">
+                        <table class="table table-hover align-middle small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Afiliado</th>
+                                    <th>Chave PIX</th>
+                                    <th>Cupom</th>
+                                    <th>Venda Total</th>
+                                    <th>Comissão (R$)</th>
+                                    <th>Data Venda</th>
+                                    <th>Status PGTO</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-commissions-list">
+                                <tr><td colspan="7" class="text-center text-muted">Carregando comissões...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. CATÁLOGO -->
+            <div class="tab-pane fade" id="products-panel">
+                <div class="card card-custom p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold m-0">Catálogo de Produtos</h5>
+                        <button class="btn btn-success btn-sm" onclick="exportCSV()"><i class="fa fa-download me-1"></i>Exportar CSV</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle small">
                             <thead>
                                 <tr>
                                     <th>SKU</th>
                                     <th>Produto</th>
-                                    <th>Preço (R$)</th>
+                                    <th>Preço</th>
                                     <th>Estoque</th>
                                     <th>Ações</th>
                                 </tr>
                             </thead>
-                            <tbody id="admin-products-list"></tbody>
+                            <tbody id="admin-products-list">
+                                <tr><td colspan="5" class="text-center text-muted">Carregando produtos...</td></tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -250,6 +246,6 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="./js/admin.js"></script>
+    <script type="module" src="js/admin.js"></script>
 </body>
 </html>
