@@ -1,29 +1,3 @@
-// Antes: (exemplo)
-const commission = {
-  orderId,
-  amount,
-  affiliateId, // <- pode ser undefined
-  createdAt: serverTimestamp()
-};
-await addDoc(collection(db, 'commissions'), commission);
-
-// Depois: (corrige problema)
-const commission = {
-  orderId,
-  amount,
-  createdAt: serverTimestamp()
-};
-// só adiciona affiliateId se for diferente de undefined ou null
-if (affiliateId !== undefined && affiliateId !== null) {
-  commission.affiliateId = affiliateId;
-}
-console.debug('commission to save:', commission);
-try {
-  await addDoc(collection(db, 'commissions'), commission);
-} catch (err) {
-  console.error('Erro ao salvar a comissão', err);
-  throw err;
-}
 // Em vez de importar tudo de ./firebase-config.js:
 import { db } from "../../js/firebase-config.js";
 import { collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -315,7 +289,7 @@ function updateCart() {
 
     cartItemsContainer.innerHTML = cart.map(item => `
         <div class="d-flex align-items-center justify-content-between p-2 mb-2 bg-light rounded border">
-            <img src="${item.image}" alt="${escapeHTML(item.name)}" style="width: 50px; height: 50px; object-fit: cover;" class="rounded me-2" onerror="this.onerror=null; this.src='images/products/default.jpg';">
+            <img src="${item.image}" alt="${escapeHTML(item.name)}" style="width: 50px; height: 50px; object-fit: cover;" class="rounded me-2" onerror="this.onerror=null; this.src='images/products/default.jpg';" />
             <div class="flex-grow-1 me-2">
                 <h6 class="mb-0 text-truncate" style="max-width: 130px;">${escapeHTML(item.name)}</h6>
                 <small class="text-muted">R$ ${item.price.toFixed(2).replace('.', ',')}</small>
@@ -419,16 +393,23 @@ async function processCheckout(event) {
         await addDoc(collection(db, "customers"), customerData);
         const orderRef = await addDoc(collection(db, "orders"), orderData);
 
+        // Corrige problema: só adiciona affiliateId se for diferente de undefined ou null
         if (appliedCoupon && commissionAmount > 0) {
-            await addDoc(collection(db, "commissions"), {
+            const commission = {
                 orderId: orderRef.id,
-                affiliateId: appliedCoupon.affiliateId,
-                affiliateName: appliedCoupon.affiliateName,
                 couponCode: appliedCoupon.code,
                 commissionAmount: commissionAmount,
                 status: "A Pagar",
                 createdAt: serverTimestamp()
-            });
+            };
+            if (appliedCoupon.affiliateId !== undefined && appliedCoupon.affiliateId !== null) {
+                commission.affiliateId = appliedCoupon.affiliateId;
+            }
+            if (appliedCoupon.affiliateName !== undefined && appliedCoupon.affiliateName !== null) {
+                commission.affiliateName = appliedCoupon.affiliateName;
+            }
+            console.debug('commission to save:', commission);
+            await addDoc(collection(db, "commissions"), commission);
         }
 
         const whatsappTarget = "5511986215473";
