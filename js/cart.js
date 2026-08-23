@@ -1,3 +1,29 @@
+// Antes: (exemplo)
+const commission = {
+  orderId,
+  amount,
+  affiliateId, // <- pode ser undefined
+  createdAt: serverTimestamp()
+};
+await addDoc(collection(db, 'commissions'), commission);
+
+// Depois: (corrige problema)
+const commission = {
+  orderId,
+  amount,
+  createdAt: serverTimestamp()
+};
+// só adiciona affiliateId se for diferente de undefined ou null
+if (affiliateId !== undefined && affiliateId !== null) {
+  commission.affiliateId = affiliateId;
+}
+console.debug('commission to save:', commission);
+try {
+  await addDoc(collection(db, 'commissions'), commission);
+} catch (err) {
+  console.error('Erro ao salvar a comissão', err);
+  throw err;
+}
 // Em vez de importar tudo de ./firebase-config.js:
 import { db } from "../../js/firebase-config.js";
 import { collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
