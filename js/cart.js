@@ -26,7 +26,7 @@ function loadSavedCustomerData() {
 async function loadProductsFromCSV() {
     try {
         const response = await fetch('ecocsv - products1.csv');
-        if (!response.ok) throw new Error("Não foi possível carregar o CSV.");
+        if (!response.ok) throw new Error("Não foi possível carregar o arquivo CSV de produtos.");
 
         const csvText = await response.text();
         const rawData = parseCSV(csvText);
@@ -38,10 +38,10 @@ async function loadProductsFromCSV() {
             return {
                 id: String(index + 1),
                 name: item["Produto"] || "Produto sem nome",
-                description: item["Descrição"] || "",
+                description: item["Descrição"] || item["Descricao"] || "",
                 price: parseFloat(cleanPrice) || 0,
                 category: (item["Categoria"] || "Geral").trim(),
-                image: item["Imagem"] || "images/products/default.jpg",
+                image: item["Imagem"] || "img/products/default.jpg",
                 stock: item["Estoque"] || "Em estoque"
             };
         }).filter(p => p.name !== "Produto sem nome");
@@ -52,7 +52,7 @@ async function loadProductsFromCSV() {
     } catch (error) {
         console.error("Erro ao carregar produtos:", error);
         const grid = document.getElementById('product-grid');
-        if (grid) grid.innerHTML = `<div class="col-12 text-center py-5 text-danger">Erro ao carregar os produtos. Verifique o arquivo CSV.</div>`;
+        if (grid) grid.innerHTML = `<div class="col-12 text-center py-5 text-danger">Erro ao carregar os produtos do catálogo. Verifique o arquivo CSV.</div>`;
     }
 }
 
@@ -116,11 +116,12 @@ function renderProducts(items) {
     grid.innerHTML = items.map(product => `
         <div class="col-md-6 col-lg-4 wow fadeIn">
             <div class="card h-100 border-0 shadow-sm product-card bg-light">
-                <div class="product-img-container rounded-top">
+                <div class="product-img-container rounded-top text-center p-3">
                     <img src="${product.image}" 
                          alt="${escapeHTML(product.name)}" 
                          class="img-fluid"
-                         onerror="this.onerror=null; this.src='images/products/default.jpg';" />
+                         style="max-height: 220px; object-fit: contain;"
+                         onerror="this.onerror=null; this.src='img/products/default.jpg';" />
                 </div>
                 <div class="card-body d-flex flex-column justify-content-between p-4">
                     <div>
@@ -188,7 +189,7 @@ function changeQuantity(productId, delta) {
     }
 }
 
-// 5. CUPOM DE DESCONTO
+// 5. VALIDAÇÃO DE CUPOM DE DESCONTO
 async function applyCoupon() {
     const input = document.getElementById('coupon-code');
     const msgEl = document.getElementById('coupon-message');
@@ -283,7 +284,7 @@ function updateCart() {
 
     cartItemsContainer.innerHTML = cart.map(item => `
         <div class="d-flex align-items-center justify-content-between p-2 mb-2 bg-light rounded border">
-            <img src="${item.image}" alt="${escapeHTML(item.name)}" style="width: 50px; height: 50px; object-fit: cover;" class="rounded me-2" onerror="this.onerror=null; this.src='images/products/default.jpg';">
+            <img src="${item.image}" alt="${escapeHTML(item.name)}" style="width: 50px; height: 50px; object-fit: cover;" class="rounded me-2" onerror="this.onerror=null; this.src='img/products/default.jpg';">
             <div class="flex-grow-1 me-2">
                 <h6 class="mb-0 text-truncate" style="max-width: 130px;">${escapeHTML(item.name)}</h6>
                 <small class="text-muted">R$ ${item.price.toFixed(2).replace('.', ',')}</small>
@@ -300,7 +301,7 @@ function updateCart() {
     `).join('');
 }
 
-// 7. CHECKOUT E WHATSAPP
+// 7. CHECKOUT E INTEGRAÇÃO WHATSAPP
 function openCheckoutModal() {
     if (cart.length === 0) {
         alert("Seu carrinho está vazio!");
@@ -400,7 +401,7 @@ async function processCheckout(event) {
         }
 
         const whatsappTarget = "5511986215473";
-        let message = `*NOVO PEDIDO #${orderRef.id.slice(-6).toUpperCase()}*\n\n`;
+        let message = `*NOVO PEDIDO #${orderRef.id.slice(-6).toUpperCase()} - SHINE EXPRESS*\n\n`;
         message += `*CLIENTE:* ${customerData.name}\n`;
         message += `*CONTATO:* ${customerData.phone}\n\n`;
         message += `*ENDEREÇO DE ENTREGA:*\n`;
@@ -419,7 +420,7 @@ async function processCheckout(event) {
         }
         message += `\n*SUBTOTAL:* R$ ${subtotal.toFixed(2).replace('.', ',')}`;
         message += `\n*TOTAL FINAL:* R$ ${finalTotal.toFixed(2).replace('.', ',')}\n\n`;
-        message += `Aguardando confirmação do frete.`;
+        message += `Aguardando confirmação do frete e chave PIX/link de pagamento.`;
 
         localStorage.removeItem('studio_cart');
         cart = [];
@@ -441,7 +442,7 @@ async function processCheckout(event) {
     }
 }
 
-// 8. EXPOSIÇÃO GLOBAL DE FUNÇÕES
+// 8. EXPOSIÇÃO GLOBAL PARA MANIPULADORES HTML
 window.filterProducts = filterProducts;
 window.addToCart = addToCart;
 window.removeFromCart = removeFromCart;
