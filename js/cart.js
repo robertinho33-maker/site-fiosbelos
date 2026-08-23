@@ -25,7 +25,7 @@ function loadSavedCustomerData() {
 // 2. CARREGAR E PARSEAR O CSV DE PRODUTOS
 async function loadProductsFromCSV() {
     try {
-        const response = await fetch('ecocsv - products1.csv');
+        const response = await fetch('./ecocsv - products1.csv', { cache: 'no-store' });
         if (!response.ok) throw new Error("Não foi possível carregar o arquivo CSV de produtos.");
 
         const csvText = await response.text();
@@ -57,17 +57,64 @@ async function loadProductsFromCSV() {
 }
 
 function parseCSV(text) {
-    const lines = text.trim().split('\n');
+    text = String(text || '')
+        .replace(/^\uFEFF/, '')
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n');
+
+    const lines = text
+        .split('\n')
+        .filter(line => line.trim() !== '');
+
     if (lines.length < 2) return [];
 
-    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-    
+    const delimiter = lines[0].includes(';') ? ';' : ',';
+
+    function parseLine(line) {
+        const values = [];
+        let value = '';
+        let insideQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const next = line[i + 1];
+
+            if (char === '"' && insideQuotes && next === '"') {
+                value += '"';
+                i++;
+                continue;
+            }
+
+            if (char === '"') {
+                insideQuotes = !insideQuotes;
+                continue;
+            }
+
+            if (char === delimiter && !insideQuotes) {
+                values.push(value.trim());
+                value = '';
+                continue;
+            }
+
+            value += char;
+        }
+
+        values.push(value.trim());
+        return values;
+    }
+
+    const headers = parseLine(lines[0]).map(header =>
+        header.replace(/^\uFEFF/, '').trim()
+    );
+
     return lines.slice(1).map(line => {
-        const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/^"|"$/g, ''));
+        const values = parseLine(line);
         const obj = {};
+
         headers.forEach((header, index) => {
-            obj[header] = values[index] || "";
+            obj[header] = values[index] || '';
         });
+
         return obj;
     });
 }
@@ -108,37 +155,76 @@ function renderProducts(items) {
     const grid = document.getElementById('product-grid');
     if (!grid) return;
 
-    if (items.length === 0) {
-        grid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">Nenhum produto encontrado nesta categoria.</p></div>';
+    if (!Array.isArray(items) || items.length === 0) {
+        grid.innerHTML = `
+            <div class="col-12">
+                <div class="catalog-empty text-center py-5">
+                    <i class="fa fa-box-open fa-3x mb-3"></i>
+                    <h5>Nenhum produto encontrado</h5>
+                    <p>Não encontramos produtos nesta categoria.</p>
+                </div>
+            </div>
+        `;
         return;
     }
 
-    grid.innerHTML = items.map(product => `
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm product-card bg-light">
-                <div class="product-img-container rounded-top text-center p-3">
-                    <img src="${product.image}" 
-                         alt="${escapeHTML(product.name)}" 
-                         class="img-fluid"
-                         style="max-height: 220px; object-fit: contain;"
-                         onerror="this.onerror=null; this.src='img/products/default.jpg';" />
-                </div>
-                <div class="card-body d-flex flex-column justify-content-between p-4">
-                    <div>
-                        <span class="badge bg-primary text-dark mb-2">${escapeHTML(product.category)}</span>
-                        <h4 class="card-title font-work-sans text-dark fs-5">${escapeHTML(product.name)}</h4>
-                        <p class="card-text text-muted small">${escapeHTML(truncate(product.description, 100))}</p>
+    grid.innerHTML = items.map(product => {
+        const price = Number(product.price) || 0;
+        const image = product.image || 'img/products/default.jpg';
+        const category = product.category || 'Geral';
+        const name = product.name || 'Produto';
+        const description = product.description || '';
+
+        return `
+            <div class="col-12 col-sm-6 col-lg-4 product-column">
+                <article class="product-card h-100">
+
+                    <div class="product-img-container">
+                        <img
+                            src="${escapeHTML(image)}"
+                            alt="${escapeHTML(name)}"
+                            class="product-image"
+                            loading="lazy"
+                            onerror="this.onerror=null;this.src='img/products/default.jpg';"
+                        >
                     </div>
-                    <div class="mt-4 pt-3 border-top d-flex align-items-center justify-content-between">
-                        <span class="fs-4 font-weight-bold text-dark">R$ ${product.price.toFixed(2).replace('.', ',')}</span>
-                        <button onclick="addToCart('${product.id}')" class="btn btn-primary btn-sm text-uppercase font-weight-bold px-3">
-                            <i class="fa fa-cart-plus me-1"></i> Comprar
-                        </button>
+
+                    <div class="product-content d-flex flex-column">
+
+                        <span class="product-category">
+                            ${escapeHTML(category)}
+                        </span>
+
+                        <h3 class="product-name">
+                            ${escapeHTML(name)}
+                        </h3>
+
+                        <p class="product-description">
+                            ${escapeHTML(truncate(description, 120))}
+                        </p>
+
+                        <div class="product-footer mt-auto">
+
+                            <div class="product-price">
+                                R$ ${price.toFixed(2).replace('.', ',')}
+                            </div>
+
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-buy-product"
+                                onclick="addToCart('${escapeHTML(product.id)}')"
+                                aria-label="Comprar ${escapeHTML(name)}"
+                            >
+                                <i class="fa fa-cart-plus me-2"></i>
+                                Comprar
+                            </button>
+
+                        </div>
                     </div>
-                </div>
+                </article>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function truncate(str, length) {
