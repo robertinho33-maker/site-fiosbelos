@@ -1,39 +1,12 @@
-// Antes: (exemplo)
-const commission = {
-  orderId,
-  amount,
-  affiliateId, // <- pode ser undefined
-  createdAt: serverTimestamp()
-};
-await addDoc(collection(db, 'commissions'), commission);
-
-// Depois: (corrige problema)
-const commission = {
-  orderId,
-  amount,
-  createdAt: serverTimestamp()
-};
-// só adiciona affiliateId se for diferente de undefined ou null
-if (affiliateId !== undefined && affiliateId !== null) {
-  commission.affiliateId = affiliateId;
-}
-console.debug('commission to save:', commission);
-try {
-  await addDoc(collection(db, 'commissions'), commission);
-} catch (err) {
-  console.error('Erro ao salvar a comissão', err);
-  throw err;
-}
-// Em vez de importar tudo de ./firebase-config.js:
-import { db } from "../../js/firebase-config.js";
+import { db } from "./firebase-config.js";
 import { collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // ESTADO GLOBAL
 let products = [];
 let cart = JSON.parse(localStorage.getItem('studio_cart')) || [];
-let appliedCoupon = null; // Armazena o cupom aplicado no momento
+let appliedCoupon = null;
 
-// 2. AUTO-PREENCHIMENTO DE DADOS DO CLIENTE
+// 1. AUTO-PREENCHIMENTO DE DADOS DO CLIENTE
 function loadSavedCustomerData() {
     const savedCustomer = JSON.parse(localStorage.getItem('studio_customer'));
     if (!savedCustomer) return;
@@ -49,7 +22,7 @@ function loadSavedCustomerData() {
     if (document.getElementById('cust-payment')) document.getElementById('cust-payment').value = savedCustomer.paymentMethod || 'Pix';
 }
 
-// 3. CARREGAR E PARSEAR O CSV DE PRODUTOS
+// 2. CARREGAR E PARSEAR O CSV DE PRODUTOS
 async function loadProductsFromCSV() {
     try {
         const response = await fetch('ecocsv - products1.csv');
@@ -83,7 +56,6 @@ async function loadProductsFromCSV() {
     }
 }
 
-// Parser manual de CSV
 function parseCSV(text) {
     const lines = text.trim().split('\n');
     if (lines.length < 2) return [];
@@ -100,7 +72,7 @@ function parseCSV(text) {
     });
 }
 
-// 4. RENDERIZAÇÃO DINÂMICA DOS FILTROS E PRODUTOS
+// 3. RENDERIZAÇÃO DE FILTROS E PRODUTOS
 function renderCategoryFilters() {
     const filterContainer = document.getElementById('category-filters');
     if (!filterContainer) return;
@@ -168,7 +140,6 @@ function renderProducts(items) {
     `).join('');
 }
 
-// Helpers
 function truncate(str, length) {
     return str.length > length ? str.substring(0, length) + '...' : str;
 }
@@ -179,7 +150,7 @@ function escapeHTML(str) {
     })[m]);
 }
 
-// 5. GERENCIAMENTO DO CARRINHO
+// 4. GERENCIAMENTO DO CARRINHO
 function addToCart(productId) {
     const product = products.find(p => p.id === productId);
     if (!product) return;
@@ -217,13 +188,12 @@ function changeQuantity(productId, delta) {
     }
 }
 
-// 6. VALIDAÇÃO DE CUPOM DE DESCONTO (Insensível a maiúsculas/minúsculas)
+// 5. CUPOM DE DESCONTO
 async function applyCoupon() {
     const input = document.getElementById('coupon-code');
     const msgEl = document.getElementById('coupon-message');
     if (!input) return;
 
-    // Converte a busca sempre para minúsculas (ex: "BEMVINDO" -> "bemvindo")
     const rawCode = input.value.trim();
     const normalizedCode = rawCode.toLowerCase();
 
@@ -236,11 +206,9 @@ async function applyCoupon() {
     }
 
     try {
-        // Tenta buscar no Firestore pelo ID em minúsculas
         let couponRef = doc(db, "coupons", normalizedCode);
         let couponSnap = await getDoc(couponRef);
 
-        // Se não encontrar em minúsculas, faz um fallback testando em maiúsculas por segurança
         if (!couponSnap.exists()) {
             couponRef = doc(db, "coupons", normalizedCode.toUpperCase());
             couponSnap = await getDoc(couponRef);
@@ -266,12 +234,12 @@ async function applyCoupon() {
         console.error("Erro ao validar cupom:", err);
         if (msgEl) {
             msgEl.className = "form-text small text-danger";
-            msgEl.innerText = "Erro ao validar cupom. Verifique as permissões ou tente novamente.";
+            msgEl.innerText = "Erro ao validar cupom.";
         }
     }
 }
 
-// 7. ATUALIZAÇÃO DO CARRINHO E CÁLCULO DOS TOTAIS
+// 6. ATUALIZAÇÃO DO CARRINHO E TOTAIS
 function updateCart() {
     localStorage.setItem('studio_cart', JSON.stringify(cart));
 
@@ -286,21 +254,21 @@ function updateCart() {
     const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-    let discountAmount = 0;
+    let discountValue = 0;
     if (appliedCoupon) {
         if (appliedCoupon.type === 'percent') {
-            discountAmount = (subtotal * appliedCoupon.value) / 100;
+            discountValue = (subtotal * appliedCoupon.value) / 100;
         } else if (appliedCoupon.type === 'fixed') {
-            discountAmount = appliedCoupon.value;
+            discountValue = appliedCoupon.value;
         }
     }
-    if (discountAmount > subtotal) discountAmount = subtotal;
+    if (discountValue > subtotal) discountValue = subtotal;
 
-    const finalTotal = subtotal - discountAmount;
+    const finalTotal = subtotal - discountValue;
 
     if (badgeCount) badgeCount.innerText = totalCount;
     if (subtotalEl) subtotalEl.innerText = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
-    if (discountEl) discountEl.innerText = `- R$ ${discountAmount.toFixed(2).replace('.', ',')}`;
+    if (discountEl) discountEl.innerText = `- R$ ${discountValue.toFixed(2).replace('.', ',')}`;
     if (totalEl) totalEl.innerText = `R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
 
     if (cart.length === 0) {
@@ -332,7 +300,7 @@ function updateCart() {
     `).join('');
 }
 
-// 8. ABRIR CHECKOUT
+// 7. CHECKOUT E WHATSAPP
 function openCheckoutModal() {
     if (cart.length === 0) {
         alert("Seu carrinho está vazio!");
@@ -349,7 +317,6 @@ function openCheckoutModal() {
     checkoutModal.show();
 }
 
-// 9. FINALIZAR COMPRA, REGISTRAR NO FIRESTORE E WHATSAPP
 async function processCheckout(event) {
     event.preventDefault();
 
@@ -374,24 +341,24 @@ async function processCheckout(event) {
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-    let discountAmount = 0;
-    let commissionAmount = 0;
+    let calcDiscount = 0;
+    let calcCommission = 0;
 
     if (appliedCoupon) {
         if (appliedCoupon.type === 'percent') {
-            discountAmount = (subtotal * appliedCoupon.value) / 100;
+            calcDiscount = (subtotal * appliedCoupon.value) / 100;
         } else {
-            discountAmount = appliedCoupon.value;
+            calcDiscount = appliedCoupon.value;
         }
-        if (discountAmount > subtotal) discountAmount = subtotal;
+        if (calcDiscount > subtotal) calcDiscount = subtotal;
 
         if (appliedCoupon.commissionPercent) {
-            const baseValue = subtotal - discountAmount;
-            commissionAmount = (baseValue * appliedCoupon.commissionPercent) / 100;
+            const baseVal = subtotal - calcDiscount;
+            calcCommission = (baseVal * appliedCoupon.commissionPercent) / 100;
         }
     }
 
-    const finalTotal = subtotal - discountAmount;
+    const finalTotal = subtotal - calcDiscount;
 
     const orderData = {
         customer: customerData,
@@ -403,13 +370,12 @@ async function processCheckout(event) {
             total: item.price * item.quantity
         })),
         subtotal: subtotal,
-        discountAmount: discountAmount,
+        discountAmount: calcDiscount,
         totalAmount: finalTotal,
         coupon: appliedCoupon ? {
             code: appliedCoupon.code,
-            affiliateId: appliedCoupon.affiliateId || null,
             affiliateName: appliedCoupon.affiliateName || null,
-            commissionAmount: commissionAmount
+            commissionAmount: calcCommission
         } : null,
         status: "Pendente",
         createdAt: serverTimestamp()
@@ -419,25 +385,27 @@ async function processCheckout(event) {
         await addDoc(collection(db, "customers"), customerData);
         const orderRef = await addDoc(collection(db, "orders"), orderData);
 
-        if (appliedCoupon && commissionAmount > 0) {
+        if (appliedCoupon && calcCommission > 0) {
             await addDoc(collection(db, "commissions"), {
                 orderId: orderRef.id,
-                affiliateId: appliedCoupon.affiliateId,
-                affiliateName: appliedCoupon.affiliateName,
-                couponCode: appliedCoupon.code,
-                commissionAmount: commissionAmount,
-                status: "A Pagar",
+                affiliateName: appliedCoupon.affiliateName || "Geral",
+                code: appliedCoupon.code,
+                pixKey: appliedCoupon.pixKey || "Não informada",
+                orderTotal: finalTotal,
+                commissionPercent: appliedCoupon.commissionPercent || 0,
+                commissionValue: calcCommission,
+                payoutStatus: "Pendente",
                 createdAt: serverTimestamp()
             });
         }
 
         const whatsappTarget = "5511986215473";
-        let message = `*NOVO PEDIDO #${orderRef.id.slice(-6).toUpperCase()} - STUDIO TOTTI*\n\n`;
+        let message = `*NOVO PEDIDO #${orderRef.id.slice(-6).toUpperCase()}*\n\n`;
         message += `*CLIENTE:* ${customerData.name}\n`;
         message += `*CONTATO:* ${customerData.phone}\n\n`;
         message += `*ENDEREÇO DE ENTREGA:*\n`;
         message += `${customerData.street}, Nº ${customerData.number}${customerData.complement ? ' (' + customerData.complement + ')' : ''}\n`;
-        message += `Bairro: ${customerData.neighborhood} - ${customerData.city}/SP\n`;
+        message += `Bairro: ${customerData.neighborhood} - ${customerData.city}\n`;
         message += `CEP: ${customerData.cep}\n\n`;
         message += `*FORMA DE PAGAMENTO:* ${customerData.paymentMethod}\n\n`;
         message += `*ITENS DO PEDIDO:*\n`;
@@ -447,11 +415,11 @@ async function processCheckout(event) {
         });
 
         if (appliedCoupon) {
-            message += `\n*CUPOM APLICADO:* ${appliedCoupon.code} (-R$ ${discountAmount.toFixed(2).replace('.', ',')})`;
+            message += `\n*CUPOM APLICADO:* ${appliedCoupon.code} (-R$ ${calcDiscount.toFixed(2).replace('.', ',')})`;
         }
         message += `\n*SUBTOTAL:* R$ ${subtotal.toFixed(2).replace('.', ',')}`;
         message += `\n*TOTAL FINAL:* R$ ${finalTotal.toFixed(2).replace('.', ',')}\n\n`;
-        message += `Aguardando confirmação do frete e chave PIX/link de pagamento.`;
+        message += `Aguardando confirmação do frete.`;
 
         localStorage.removeItem('studio_cart');
         cart = [];
@@ -473,7 +441,7 @@ async function processCheckout(event) {
     }
 }
 
-// 10. EXPORTAÇÃO DAS FUNÇÕES PARA O ESCOPO GLOBAL
+// 8. EXPOSIÇÃO GLOBAL DE FUNÇÕES
 window.filterProducts = filterProducts;
 window.addToCart = addToCart;
 window.removeFromCart = removeFromCart;
@@ -482,7 +450,6 @@ window.applyCoupon = applyCoupon;
 window.openCheckoutModal = openCheckoutModal;
 window.processCheckout = processCheckout;
 
-// INICIALIZAÇÃO
 document.addEventListener("DOMContentLoaded", () => {
     loadProductsFromCSV();
     loadSavedCustomerData();
