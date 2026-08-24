@@ -8,14 +8,44 @@ import {
     setDoc,
     updateDoc,
     deleteDoc,
-    serverTimestamp
+    serverTimestamp,
+    runTransaction
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // =========================================================
 // DECLARAÇÃO OBRIGATÓRIA DE TODAS AS VARIÁVEIS GLOBAIS
 // (Devem estar no topo antes de qualquer execução)
 // =========================================================
-let cart = JSON.parse(localStorage.getItem('studio_cart')) || [];
+let cart = [];
+
+function loadSavedCart() {
+    try {
+        const saved = JSON.parse(localStorage.getItem("studio_cart") || "[]");
+
+        if (!Array.isArray(saved)) {
+            return [];
+        }
+
+        return saved
+            .filter(item => item && typeof item === "object")
+            .map(item => ({
+                ...item,
+                id: String(item.id || "").trim(),
+                quantity: Number(item.quantity)
+            }))
+            .filter(item =>
+                item.id &&
+                Number.isInteger(item.quantity) &&
+                item.quantity > 0
+            );
+    } catch (error) {
+        console.warn("Carrinho salvo inválido. Carrinho será reiniciado.", error);
+        localStorage.removeItem("studio_cart");
+        return [];
+    }
+}
+
+cart = loadSavedCart();
 let appliedCoupon = null;
 let products = [];
 let orders = [];
@@ -197,36 +227,121 @@ if (document.getElementById('cust-state')) {
 }
 
 // 2. CARREGAR E PARSEAR O CSV DE PRODUTOS
-async function loadProductsFromCSV() {
+function syncCartWithProducts() {
+    if (!Array.isArray(cart) || !Array.isArray(products)) {
+        cart = [];
+        return;
+    }
+
+    const productMap = new Map(
+        products.map(product => [String(product.id).trim(), product])
+    );
+
+    const syncedCart = [];
+    const seenIds = new Set();
+
+    for (const item of cart) {
+        const id = String(item.id || "").trim();
+
+        if (!id || seenIds.has(id)) {
+            continue;
+        }
+
+        const product = productMap.get(id);
+
+        if (!product) {
+            console.warn(`Produto removido do catálogo: ${id}`);
+            continue;
+        }
+
+        const quantity = Number(item.quantity);
+
+        if (!Number.isInteger(quantity) || quantity <= 0) {
+            continue;
+        }
+
+        syncedCart.push({
+            ...product,
+            quantity
+        });
+
+        seenIds.add(id);
+    }
+
+    cart = syncedCart;
+
+    localStorage.setItem(
+        "studio_cart",
+        JSON.stringify(cart)
+    );
+}
+
+async function loadProductsFromJSON() {
     try {
-        const response = await fetch('./ecocsv - products1.csv', { cache: 'no-store' });
-        if (!response.ok) throw new Error("Não foi possível carregar o arquivo CSV de produtos.");
+        const response = await fetch("./products.normalized.json", {
+            cache: "no-store"
+        });
 
-        const csvText = await response.text();
-        const rawData = parseCSV(csvText);
+        if (!response.ok) {
+            throw new Error(
+                `Não foi possível carregar products.normalized.json (${response.status})`
+            );
+        }
 
-        products = rawData.map((item, index) => {
-            const rawPrice = (item["Preço"] || item["Preco"] || "0").toString();
-            const cleanPrice = rawPrice.replace("R$", "").replace(/\./g, "").replace(",", ".").trim();
+        const data = await response.json();
 
-            return {
-                id: String(index + 1),
-                name: item["Produto"] || "Produto sem nome",
-                description: item["Descrição"] || item["Descricao"] || "",
-                price: parseFloat(cleanPrice) || 0,
-                category: (item["Categoria"] || "Geral").trim(),
-                image: item["Imagem"] || "img/products/default.jpg",
-                stock: item["Estoque"] || "Em estoque"
-            };
-        }).filter(p => p.name !== "Produto sem nome");
+        if (!Array.isArray(data)) {
+            throw new Error(
+                "products.normalized.json não contém um array."
+            );
+        }
+
+        products = data
+            .filter(product => product && typeof product === "object")
+            .map(product => ({
+                id: String(product.sku || "").trim(),
+                sku: String(product.sku || "").trim(),
+                name: String(product.name || "Produto sem nome").trim(),
+                description: String(product.description || "").trim(),
+                price: Number(product.price) || 0,
+                category: String(product.category || "Geral").trim(),
+                image: String(
+                    product.image || "img/products/default.jpg"
+                ).trim(),
+                stock: product.stockStatus || "in_stock",
+                stockStatus: product.stockStatus || "in_stock",
+                stockQuantity:
+                    Number.isInteger(product.stockQuantity)
+                        ? product.stockQuantity
+                        : null,
+                weight: product.weight || ""
+            }))
+            .filter(product => product.id && product.name);
+
+        console.log(
+            `✅ ${products.length} produtos carregados de products.normalized.json`
+        );
 
         renderCategoryFilters();
         renderProducts(products);
+        syncCartWithProducts();
         updateCart();
+
     } catch (error) {
-        console.error("Erro ao carregar produtos:", error);
-        const grid = document.getElementById('product-grid');
-        if (grid) grid.innerHTML = `<div class="col-12 text-center py-5 text-danger">Erro ao carregar os produtos do catálogo. Verifique o arquivo CSV.</div>`;
+        console.error(
+            "❌ Erro ao carregar catálogo normalizado:",
+            error
+        );
+
+        const grid = document.getElementById("product-grid");
+
+        if (grid) {
+            grid.innerHTML = `
+                <div class="col-12 text-center py-5 text-danger">
+                    Erro ao carregar o catálogo de produtos.
+                </div>
+            `;
+        }
     }
 }
 
@@ -810,6 +925,39 @@ function openCheckoutModal() {
     checkoutModal.show();
 }
 
+async function generateOrderNumber() {
+    const counterRef = doc(db, "counters", "orders");
+
+    const sequence = await runTransaction(db, async transaction => {
+        const counterSnap = await transaction.get(counterRef);
+
+        const currentNumber = counterSnap.exists()
+            ? Number(counterSnap.data().lastNumber) || 0
+            : 0;
+
+        const nextNumber = currentNumber + 1;
+
+        transaction.set(
+            counterRef,
+            {
+                lastNumber: nextNumber,
+                updatedAt: serverTimestamp()
+            },
+            { merge: true }
+        );
+
+        return nextNumber;
+    });
+
+    const date = new Date();
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `PED-${year}${month}${day}-${String(sequence).padStart(4, "0")}`;
+}
+
 async function processCheckout(event) {
     event.preventDefault();
 
@@ -901,9 +1049,15 @@ async function processCheckout(event) {
 
     const finalTotal = subtotal - calcDiscount;
 
+    const orderNumber = await generateOrderNumber();
+
     // 4. ESTRUTURAÇÃO DO PEDIDO
+    // Modelo operacional: mantém os campos antigos para compatibilidade
+    // e adiciona estruturas explícitas para pagamento, entrega e comissão.
     const orderData = {
+        orderNumber: orderNumber,
         customerId: customerId,
+
         customer: {
             name: customerData.name,
             email: customerData.email,
@@ -918,16 +1072,40 @@ async function processCheckout(event) {
             state: customerData.state,
             paymentMethod: customerData.paymentMethod
         },
+
         items: cart.map(item => ({
             id: item.id,
+            sku: item.sku || item.id,
             name: item.name,
             price: Number(item.price) || 0,
             quantity: Number(item.quantity) || 1,
             total: (Number(item.price) || 0) * (Number(item.quantity) || 1)
         })),
+
+        // Campos financeiros legados
         subtotal: subtotal,
         discountAmount: calcDiscount,
         totalAmount: finalTotal,
+
+        // Estrutura financeira operacional
+        totals: {
+            subtotal: subtotal,
+            discount: calcDiscount,
+            total: finalTotal
+        },
+
+        // Pagamento
+        payment: {
+            method: customerData.paymentMethod || "Pix",
+            status: "Pendente"
+        },
+
+        // Entrega
+        fulfillment: {
+            status: "Pendente"
+        },
+
+        // Cupom e comissão
         coupon: appliedCoupon
             ? {
                 code: appliedCoupon.code,
@@ -935,8 +1113,18 @@ async function processCheckout(event) {
                 commissionAmount: calcCommission
             }
             : null,
+
+        commission: {
+            applicable: Boolean(appliedCoupon && calcCommission > 0),
+            amount: calcCommission,
+            status: calcCommission > 0 ? "Pendente" : "Nao aplicavel"
+        },
+
+        // Status comercial do pedido
         status: "Pendente",
-        createdAt: serverTimestamp()
+
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
     };
 
     try {
@@ -988,7 +1176,7 @@ async function processCheckout(event) {
 
         // 8. GERAR MENSAGEM DO WHATSAPP
         const whatsappTarget = "5511986215473";
-        let message = `*NOVO PEDIDO #${orderRef.id.slice(-6).toUpperCase()} - SHINE EXPRESS*\n\n`;
+        let message = `*NOVO PEDIDO #${orderNumber} - SHINE EXPRESS*\n\n`;
         message += `*CLIENTE:* ${customerData.name}\n`;
         message += `*CONTATO:* ${customerData.phone}\n\n`;
         message += `*ENDEREÇO DE ENTREGA:*\n`;
@@ -1042,6 +1230,6 @@ window.openCheckoutModal = openCheckoutModal;
 window.processCheckout = processCheckout;
 
 document.addEventListener("DOMContentLoaded", () => {
-    loadProductsFromCSV();
+    loadProductsFromJSON();
     loadSavedCustomerData();
 });

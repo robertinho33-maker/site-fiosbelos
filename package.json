@@ -1,0 +1,27 @@
+{
+  "name": "site-fiosbelos",
+  "version": "1.0.0",
+  "description": "- [Demo](https://themewagon.github.io/Salone/)",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robertinho33-maker/site-fiosbelos.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/robertinho33-maker/site-fiosbelos/issues"
+  },
+  "homepage": "https://github.com/robertinho33-maker/site-fiosbelos#readme",
+  "dependencies": {
+    "csv-parse": "^7.0.2"
+  }
+}
