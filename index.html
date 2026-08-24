@@ -151,89 +151,99 @@
         </div>
     </div>
 
-    <!-- MODAL DE CADASTRO E ENTREGA -->
+    <!-- MODAL DE CADASTRO E ENTREGA (TIPOGRAFIA UNIFICADA) -->
     <div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title text-primary font-dancing-script fs-3" id="checkoutModalLabel">Dados de Entrega & Cadastro</h5>
+            <div class="modal-content font-work-sans">
+                <div class="modal-header bg-dark text-white border-0 py-3">
+                    <h5 class="modal-title fs-5 fw-bold text-primary" id="checkoutModalLabel">
+                        <i class="fa fa-truck me-2"></i>Dados de Entrega & Cadastro
+                    </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
+                
                 <form onsubmit="processCheckout(event)">
                     <div class="modal-body p-4">
-                        <h6 class="text-primary fw-bold mb-3">1. Dados Pessoais</h6>
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label for="cust-name" class="form-label small fw-bold">Nome Completo</label>
-                                <input type="text" id="cust-name" class="form-control" required placeholder="Digite seu nome">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="cust-phone" class="form-label small fw-bold">WhatsApp / Telefone</label>
-                                <input type="tel" id="cust-phone" class="form-control" required placeholder="(11) 99999-9999">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="cust-email" class="form-label small fw-bold">E-mail</label>
-                                <input type="email" id="cust-email" class="form-control" autocomplete="email" placeholder="cliente@email.com">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="cust-birthDate" class="form-label small fw-bold">Data de Nascimento</label>
-                                <input type="date" id="cust-birthDate" class="form-control">
+                        <!-- SEÇÃO 1: DADOS PESSOAIS -->
+                        <div class="border-bottom pb-3 mb-4">
+                            <h6 class="text-uppercase text-muted fw-bold mb-3 fs-7 tracking-wide">1. Dados Pessoais</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="cust-name" class="form-label fw-semibold text-secondary">Nome Completo</label>
+                                    <input type="text" id="cust-name" class="form-control" required placeholder="Digite seu nome">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="cust-phone" class="form-label fw-semibold text-secondary">WhatsApp / Telefone</label>
+                                    <input type="tel" id="cust-phone" class="form-control" required placeholder="(11) 99999-9999">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="cust-email" class="form-label fw-semibold text-secondary">E-mail</label>
+                                    <input type="email" id="cust-email" class="form-control" autocomplete="email" placeholder="cliente@email.com">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="cust-birthDate" class="form-label fw-semibold text-secondary">Data de Nascimento</label>
+                                    <input type="date" id="cust-birthDate" class="form-control">
+                                </div>
                             </div>
                         </div>
 
-                        <h6 class="text-primary fw-bold mb-3">2. Endereço de Entrega</h6>
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-4">
-                                <label for="cust-cep" class="form-label small fw-bold">CEP</label>
-                                <input type="text" id="cust-cep" class="form-control" required placeholder="00000-000">
-                            </div>
-                            <div class="col-md-8">
-                                <label for="cust-street" class="form-label small fw-bold">Rua / Avenida</label>
-                                <input type="text" id="cust-street" class="form-control" required placeholder="Ex: Rua das Flores">
-                            </div>
-                            <div class="col-md-3">
-                                <label for="cust-number" class="form-label small fw-bold">Número</label>
-                                <input type="text" id="cust-number" class="form-control" required placeholder="123">
-                            </div>
-                            <div class="col-md-4">
-                                <label for="cust-complement" class="form-label small fw-bold">Complemento</label>
-                                <input type="text" id="cust-complement" class="form-control" placeholder="Apto 42, Bloco B">
-                            </div>
-                            <div class="col-md-5">
-                                <label for="cust-neighborhood" class="form-label small fw-bold">Bairro</label>
-                                <input type="text" id="cust-neighborhood" class="form-control" required placeholder="Ex: Centro">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="cust-city" class="form-label small fw-bold">Cidade</label>
-                                <input type="text" id="cust-city" class="form-control" value="São Paulo" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="cust-state" class="form-label small fw-bold">UF</label>
-                                <select id="cust-state" class="form-select">
-                                    <option value="">UF</option>
-                                    <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
-                                    <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
-                                    <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
-                                    <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
-                                    <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
-                                    <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
-                                    <option selected>SP</option><option>SE</option><option>TO</option>
-                                </select>
-                            </div>
-                            <div class="col-md-12">
-                                <label for="cust-payment" class="form-label small fw-bold">Forma de Pagamento Preferida</label>
-                                <select id="cust-payment" class="form-select" required>
-                                    <option value="Pix">Pix (Aprovação Imediata)</option>
-                                    <option value="Cartão de Crédito">Cartão de Crédito</option>
-                                    <option value="Cartão de Débito">Cartão de Débito</option>
-                                    <option value="Dinheiro">Dinheiro na entrega</option>
-                                </select>
+                        <!-- SEÇÃO 2: ENDEREÇO E PAGAMENTO -->
+                        <div>
+                            <h6 class="text-uppercase text-muted fw-bold mb-3 fs-7 tracking-wide">2. Endereço de Entrega & Pagamento</h6>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="cust-cep" class="form-label fw-semibold text-secondary">CEP</label>
+                                    <input type="text" id="cust-cep" class="form-control" required placeholder="00000-000">
+                                </div>
+                                <div class="col-md-8">
+                                    <label for="cust-street" class="form-label fw-semibold text-secondary">Rua / Avenida</label>
+                                    <input type="text" id="cust-street" class="form-control" required placeholder="Ex: Rua das Flores">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="cust-number" class="form-label fw-semibold text-secondary">Número</label>
+                                    <input type="text" id="cust-number" class="form-control" required placeholder="123">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="cust-complement" class="form-label fw-semibold text-secondary">Complemento</label>
+                                    <input type="text" id="cust-complement" class="form-control" placeholder="Apto 42, Bloco B">
+                                </div>
+                                <div class="col-md-5">
+                                    <label for="cust-neighborhood" class="form-label fw-semibold text-secondary">Bairro</label>
+                                    <input type="text" id="cust-neighborhood" class="form-control" required placeholder="Ex: Centro">
+                                </div>
+                                <div class="col-md-8">
+                                    <label for="cust-city" class="form-label fw-semibold text-secondary">Cidade</label>
+                                    <input type="text" id="cust-city" class="form-control" value="São Paulo" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="cust-state" class="form-label fw-semibold text-secondary">UF</label>
+                                    <select id="cust-state" class="form-select">
+                                        <option value="">UF</option>
+                                        <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
+                                        <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+                                        <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
+                                        <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
+                                        <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+                                        <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
+                                        <option selected>SP</option><option>SE</option><option>TO</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-12 mt-3">
+                                    <label for="cust-payment" class="form-label fw-semibold text-secondary">Forma de Pagamento Preferida</label>
+                                    <select id="cust-payment" class="form-select" required>
+                                        <option value="Pix">Pix (Aprovação Imediata)</option>
+                                        <option value="Cartão de Crédito">Cartão de Crédito</option>
+                                        <option value="Cartão de Débito">Cartão de Débito</option>
+                                        <option value="Dinheiro">Dinheiro na entrega</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar ao Carrinho</button>
-                        <button type="submit" class="btn btn-primary font-weight-bold px-4 py-2">
+
+                    <div class="modal-footer bg-light border-0 py-3">
+                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Voltar</button>
+                        <button type="submit" class="btn btn-primary fw-bold px-4">
                             <i class="fab fa-whatsapp me-2"></i>Enviar Pedido via WhatsApp
                         </button>
                     </div>
