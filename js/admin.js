@@ -10,6 +10,14 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+import {
+    normalizeOrder
+} from "./contracts/order-normalizer.js";
+
+import {
+    canTransitionOrderStatus
+} from "./contracts/order-transitions.js";
+
 let products = [];
 let orders = [];
 let customers = [];
@@ -424,10 +432,12 @@ async function loadOrders() {
         // Isso evita problemas com pedidos antigos sem createdAt.
         const snapshot = await getDocs(collection(db, "orders"));
 
-        orders = snapshot.docs.map(item => ({
-            id: item.id,
-            ...item.data()
-        }));
+        orders = snapshot.docs.map(item =>
+            normalizeOrder({
+                id: item.id,
+                ...item.data()
+            })
+        );
 
         orders.sort(
             (a, b) =>
@@ -598,7 +608,7 @@ function renderOrders() {
     );
 
     const paid = filtered
-        .filter(order => order.status === "Pago")
+        .filter(order => order.paymentStatus === "Pago")
         .reduce(
             (sum, order) => sum + Number(order.totalAmount || 0),
             0
@@ -675,13 +685,19 @@ function renderOrders() {
                         class="form-select form-select-sm admin-status"
                         onchange="updateOrderStatus('${order.id}', this.value)"
                     >
-                        ${["Pendente", "Pago", "Enviado", "Cancelado"]
+                        ${[
+    "Pendente",
+    "Confirmado",
+    "Em processamento",
+    "Concluido",
+    "Cancelado"
+]
                             .map(
                                 statusOption => `
                                 <option
                                     value="${statusOption}"
                                     ${
-                                        order.status === statusOption
+                                        order.orderStatus === statusOption
                                             ? "selected"
                                             : ""
                                     }
@@ -712,22 +728,49 @@ function renderOrders() {
 
 async function updateOrderStatus(orderId, newStatus) {
     try {
-        await updateDoc(doc(db, "orders", orderId), {
-            status: newStatus,
-            updatedAt: serverTimestamp()
-        });
-
         const order = orders.find(item => item.id === orderId);
 
-        if (order) {
-            order.status = newStatus;
+        if (!order) {
+            throw new Error("Pedido não encontrado.");
         }
+
+        const currentStatus =
+            order.orderStatus || order.status || null;
+
+        if (!canTransitionOrderStatus(currentStatus, newStatus)) {
+            alert(
+                `Transição de status não permitida:\n\n` +
+                `${currentStatus} → ${newStatus}`
+            );
+
+            renderOrders();
+            return;
+        }
+
+        await updateDoc(
+            doc(db, "orders", orderId),
+            {
+                status: newStatus,
+                updatedAt: serverTimestamp()
+            }
+        );
+
+        order.status = newStatus;
+        order.orderStatus = newStatus;
 
         renderOrders();
 
     } catch (error) {
-        console.error("Erro ao atualizar pedido:", error);
-        alert("Não foi possível atualizar o status.");
+        console.error(
+            "Erro ao atualizar pedido:",
+            error
+        );
+
+        alert(
+            "Não foi possível atualizar o status do pedido."
+        );
+
+        renderOrders();
     }
 }
 
@@ -802,7 +845,7 @@ function viewOrder(orderId) {
                     </div>
                 </div>
 
-                <div class="col-md-4">
+                                <div class="col-md-4">
                     <small class="text-muted">Subtotal</small>
                     <h5>${money(order.subtotal)}</h5>
                 </div>
@@ -817,6 +860,29 @@ function viewOrder(orderId) {
                 <div class="col-md-4">
                     <small class="text-muted">Total</small>
                     <h4>${money(order.totalAmount)}</h4>
+                </div>
+
+                <div class="col-md-4">
+                    <small class="text-muted">Status do pedido</small>
+                    <div class="form-control bg-light">
+                        ${escapeHTML(order.orderStatus || "Pendente")}
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <small class="text-muted">Pagamento</small>
+                    <div class="form-control bg-light">
+                        ${escapeHTML(order.paymentStatus || "Não informado")}
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <small class="text-muted">Entrega</small>
+                    <div class="form-control bg-light">
+                        ${escapeHTML(
+                            order.fulfillmentStatus || "Não informado"
+                        )}
+                    </div>
                 </div>
 
                 ${

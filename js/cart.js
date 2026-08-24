@@ -20,6 +20,16 @@ import {
     COMMISSION_STATUS
 } from "./contracts/order-status.js";
 
+import {
+    validateOrderIntegrity
+} from "./contracts/order-integrity.js";
+
+import {
+    normalizeOrder,
+    getOrderTotal
+} from "./contracts/order-normalizer.js";
+
+
 // =========================================================
 // DECLARAÇÃO OBRIGATÓRIA DE TODAS AS VARIÁVEIS GLOBAIS
 // (Devem estar no topo antes de qualquer execução)
@@ -662,8 +672,8 @@ function renderCategoryFilters() {
     const categories = ['Todos', ...new Set(products.map(p => p.category))].sort();
 
     filterContainer.innerHTML = categories.map((cat, index) => `
-        <button type="button" 
-                class="btn btn-outline-primary filter-btn ${index === 0 ? 'active' : ''}" 
+        <button type="button"
+                class="btn btn-outline-primary filter-btn ${index === 0 ? 'active' : ''}"
                 onclick="filterProducts('${escapeHTML(cat)}')">
             ${escapeHTML(cat)}
         </button>
@@ -1164,6 +1174,22 @@ async function processCheckout(event) {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
 };
+        // =====================================================
+    // VALIDAÇÃO DE INTEGRIDADE — SCHEMA V1
+    // Nenhum pedido inválido pode ser persistido.
+    // =====================================================
+    const integrity = validateOrderIntegrity(orderData);
+
+    if (!integrity.valid) {
+        console.error(
+            "Pedido rejeitado por falha de integridade:",
+            integrity.errors
+        );
+
+        throw new Error(
+            `Pedido inválido: ${integrity.errors.join(" | ")}`
+        );
+    }
 
     try {
         // 5. SALVAR/ATUALIZAR CLIENTE NO FIRESTORE
