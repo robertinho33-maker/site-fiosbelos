@@ -634,12 +634,6 @@ function truncate(str, length) {
     return str.length > length ? str.substring(0, length) + '...' : str;
 }
 
-function escapeHTML(str) {
-    return String(str || '').replace(/[&<>"']/g, m => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    })[m]);
-}
-
 // 4. GERENCIAMENTO DO CARRINHO
 function addToCart(productId) {
     const product = products.find(p => p.id === productId);
