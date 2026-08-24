@@ -15,8 +15,18 @@ import {
 } from "./contracts/order-normalizer.js";
 
 import {
-    canTransitionOrderStatus
-} from "./contracts/order-transitions.js";
+    confirmOrder,
+    startOrderProcessing,
+    completeOrder,
+    cancelOrder,
+    updatePaymentStatus,
+    updateFulfillmentStatus,
+
+} from "./contracts/order-operations.js";
+
+import {
+    updateCommissionStatus as updateCommissionStatusOperation
+} from "./contracts/commission-operations.js";
 
 let products = [];
 let orders = [];
@@ -432,12 +442,27 @@ async function loadOrders() {
         // Isso evita problemas com pedidos antigos sem createdAt.
         const snapshot = await getDocs(collection(db, "orders"));
 
-        orders = snapshot.docs.map(item =>
-            normalizeOrder({
-                id: item.id,
-                ...item.data()
-            })
+      orders = snapshot.docs.map(item => {
+    const normalizedOrder =
+        normalizeOrder({
+            id: item.id,
+            ...item.data()
+        });
+
+    const integrity =
+        validateOrderIntegrity(
+            normalizedOrder
         );
+
+    return {
+        ...normalizedOrder,
+
+        integrity: {
+            valid: integrity.valid,
+            errors: integrity.errors
+        }
+    };
+});
 
         orders.sort(
             (a, b) =>
@@ -486,8 +511,9 @@ function createOrderInterface() {
             >
                 <option value="">Todos os status</option>
                 <option value="Pendente">Pendente</option>
-                <option value="Pago">Pago</option>
-                <option value="Enviado">Enviado</option>
+                <option value="Confirmado">Confirmado</option>
+                <option value="Em processamento">Em processamento</option>
+                <option value="Concluido">Concluído</option>
                 <option value="Cancelado">Cancelado</option>
             </select>
 
@@ -533,6 +559,7 @@ function createOrderInterface() {
                 <th>Cliente</th>
                 <th>Total</th>
                 <th>Cupom</th>
+                <th>Integridade</th>
                 <th>Status</th>
                 <th>Ações</th>
             `;
@@ -671,13 +698,32 @@ function renderOrders() {
                 </td>
 
                 <td>
-                    ${
-                        coupon.code
-                            ? `<span class="badge bg-light text-dark">
-                                ${escapeHTML(coupon.code)}
-                               </span>`
-                            : "-"
-                    }
+                    <td>
+    ${
+        order.integrity?.valid
+            ? `
+                <span
+                    class="badge bg-success"
+                    title="Dados financeiros íntegros"
+                >
+                    <i class="fa fa-check me-1"></i>
+                    Íntegro
+                </span>
+              `
+            : `
+                <span
+                    class="badge bg-danger"
+                    title="${escapeHTML(
+                        (order.integrity?.errors || []).join(" | ")
+                    )}"
+                >
+                    <i class="fa fa-exclamation-triangle me-1"></i>
+                    Revisar
+                </span>
+              `
+    }
+</td>
+
                 </td>
 
                 <td>
@@ -734,26 +780,28 @@ async function updateOrderStatus(orderId, newStatus) {
             throw new Error("Pedido não encontrado.");
         }
 
-        const currentStatus =
-            order.orderStatus || order.status || null;
+        switch (newStatus) {
+            case "Confirmado":
+                await confirmOrder(order);
+                break;
 
-        if (!canTransitionOrderStatus(currentStatus, newStatus)) {
-            alert(
-                `Transição de status não permitida:\n\n` +
-                `${currentStatus} → ${newStatus}`
-            );
+            case "Em processamento":
+                await startOrderProcessing(order);
+                break;
 
-            renderOrders();
-            return;
+            case "Concluido":
+                await completeOrder(order);
+                break;
+
+            case "Cancelado":
+                await cancelOrder(order);
+                break;
+
+            default:
+                throw new Error(
+                    `Status operacional inválido: ${newStatus}`
+                );
         }
-
-        await updateDoc(
-            doc(db, "orders", orderId),
-            {
-                status: newStatus,
-                updatedAt: serverTimestamp()
-            }
-        );
 
         order.status = newStatus;
         order.orderStatus = newStatus;
@@ -767,12 +815,88 @@ async function updateOrderStatus(orderId, newStatus) {
         );
 
         alert(
+            error?.message ||
             "Não foi possível atualizar o status do pedido."
         );
 
         renderOrders();
     }
 }
+
+async function handlePaymentStatus(orderId, newStatus) {
+    try {
+        const order = orders.find(item => item.id === orderId);
+
+        if (!order) {
+            throw new Error("Pedido não encontrado.");
+        }
+
+        await updatePaymentStatus(order, newStatus);
+
+        order.paymentStatus = newStatus;
+
+        if (!order.payment) {
+            order.payment = {};
+        }
+
+        order.payment.status = newStatus;
+
+        renderOrders();
+
+    } catch (error) {
+        console.error(
+            "Erro ao atualizar pagamento:",
+            error
+        );
+
+        alert(
+            error?.message ||
+            "Não foi possível atualizar o pagamento."
+        );
+
+        renderOrders();
+    }
+}
+
+
+async function handleFulfillmentStatus(orderId, newStatus) {
+    try {
+        const order = orders.find(item => item.id === orderId);
+
+        if (!order) {
+            throw new Error("Pedido não encontrado.");
+        }
+
+        await updateFulfillmentStatus(order, newStatus);
+
+        order.fulfillmentStatus = newStatus;
+
+        if (!order.fulfillment) {
+            order.fulfillment = {};
+        }
+
+        order.fulfillment.status = newStatus;
+
+        renderOrders();
+
+    } catch (error) {
+        console.error(
+            "Erro ao atualizar fulfillment:",
+            error
+        );
+
+        alert(
+            error?.message ||
+            "Não foi possível atualizar o fulfillment."
+        );
+
+        renderOrders();
+    }
+}
+
+
+window.handlePaymentStatus = handlePaymentStatus;
+window.handleFulfillmentStatus = handleFulfillmentStatus;
 
 function viewOrder(orderId) {
     const order = orders.find(item => item.id === orderId);
@@ -818,6 +942,65 @@ function viewOrder(orderId) {
                         ${escapeHTML(customer.paymentMethod || "-")}
                     </div>
                 </div>
+
+                <div class="col-md-6">
+    <label class="form-label">Status do pagamento</label>
+
+    <select
+        class="form-select"
+        onchange="handlePaymentStatus('${order.id}', this.value)"
+    >
+        ${[
+            "Pendente",
+            "Pago",
+            "Recusado",
+            "Cancelado"
+        ]
+            .map(status => `
+                <option
+                    value="${status}"
+                    ${
+                        order.paymentStatus === status
+                            ? "selected"
+                            : ""
+                    }
+                >
+                    ${status}
+                </option>
+            `)
+            .join("")}
+    </select>
+</div>
+
+<div class="col-md-6">
+    <label class="form-label">Fulfillment</label>
+
+    <select
+        class="form-select"
+        onchange="handleFulfillmentStatus('${order.id}', this.value)"
+    >
+        ${[
+            "Pendente",
+            "Preparando",
+            "Enviado",
+            "Entregue",
+            "Cancelado"
+        ]
+            .map(status => `
+                <option
+                    value="${status}"
+                    ${
+                        order.fulfillmentStatus === status
+                            ? "selected"
+                            : ""
+                    }
+                >
+                    ${status}
+                </option>
+            `)
+            .join("")}
+    </select>
+</div>
 
                 <div class="col-12">
                     <label class="form-label">Itens</label>
@@ -1524,30 +1707,35 @@ function renderCommissions() {
 
 async function updateCommissionStatus(id, status) {
     try {
-        await updateDoc(
-            doc(db, "commissions", id),
-            {
-                payoutStatus: status,
-                paidAt:
-                    status === "Pago"
-                        ? serverTimestamp()
-                        : null
-            }
-        );
-
         const item = commissions.find(
             commission => commission.id === id
         );
 
-        if (item) {
-            item.payoutStatus = status;
+        if (!item) {
+            throw new Error("Comissão não encontrada.");
         }
+
+        await updateCommissionStatusOperation(
+            item,
+            status
+        );
+
+        item.payoutStatus = status;
 
         renderCommissions();
 
     } catch (error) {
-        console.error(error);
-        alert("Não foi possível atualizar o pagamento.");
+        console.error(
+            "Erro ao atualizar comissão:",
+            error
+        );
+
+        alert(
+            error?.message ||
+            "Não foi possível atualizar a comissão."
+        );
+
+        renderCommissions();
     }
 }
 
