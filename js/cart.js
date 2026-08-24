@@ -11,15 +11,21 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// =========================================================
+// DECLARAÇÃO OBRIGATÓRIA DE TODAS AS VARIÁVEIS GLOBAIS
+// (Devem estar no topo antes de qualquer execução)
+// =========================================================
+let cart = JSON.parse(localStorage.getItem('studio_cart')) || [];
+let appliedCoupon = null;
 let products = [];
 let orders = [];
 let customers = [];
 let coupons = [];
 let commissions = [];
 
-let cart = JSON.parse(localStorage.getItem("studio_cart") || "[]");
-let appliedCoupon = null;
-
+// =========================================================
+// FUNÇÕES UTILITÁRIAS
+// =========================================================
 const money = value =>
     Number(value || 0).toLocaleString("pt-BR", {
         style: "currency",
