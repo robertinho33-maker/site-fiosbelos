@@ -17,6 +17,8 @@ let customers = [];
 let coupons = [];
 let commissions = [];
 
+let cart = JSON.parse(localStorage.getItem("studio_cart") || "[]");
+
 const money = value =>
     Number(value || 0).toLocaleString("pt-BR", {
         style: "currency",
