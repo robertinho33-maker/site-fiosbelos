@@ -1,6 +1,12 @@
 import { db } from "./firebase-config.js";
-import { collection, addDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
+import {
+    collection,
+    addDoc,
+    doc,
+    getDoc,
+    setDoc,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 // ESTADO GLOBAL
 let products = [];
 let cart = JSON.parse(localStorage.getItem('studio_cart')) || [];
@@ -11,6 +17,20 @@ function loadSavedCustomerData() {
     const savedCustomer = JSON.parse(localStorage.getItem('studio_customer'));
     if (!savedCustomer) return;
 
+    if (document.getElementById('cust-email')) {
+    document.getElementById('cust-email').value =
+        savedCustomer.email || '';
+}
+
+if (document.getElementById('cust-birthDate')) {
+    document.getElementById('cust-birthDate').value =
+        savedCustomer.birthDate || '';
+}
+
+if (document.getElementById('cust-state')) {
+    document.getElementById('cust-state').value =
+        savedCustomer.state || '';
+}
     if (document.getElementById('cust-name')) document.getElementById('cust-name').value = savedCustomer.name || '';
     if (document.getElementById('cust-phone')) document.getElementById('cust-phone').value = savedCustomer.phone || '';
     if (document.getElementById('cust-cep')) document.getElementById('cust-cep').value = savedCustomer.cep || '';
@@ -411,17 +431,23 @@ async function processCheckout(event) {
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registrando pedido...';
 
-    const customerData = {
-        name: document.getElementById('cust-name').value,
-        phone: document.getElementById('cust-phone').value,
-        cep: document.getElementById('cust-cep').value,
-        street: document.getElementById('cust-street').value,
-        number: document.getElementById('cust-number').value,
-        complement: document.getElementById('cust-complement').value || '',
-        neighborhood: document.getElementById('cust-neighborhood').value,
-        city: document.getElementById('cust-city').value,
-        paymentMethod: document.getElementById('cust-payment').value,
-        updatedAt: serverTimestamp()
+    const getValue = id =>
+    document.getElementById(id)?.value?.trim() || '';
+
+const customerData = {
+    name: getValue('cust-name'),
+    email: getValue('cust-email'),
+    phone: getValue('cust-phone'),
+    birthDate: getValue('cust-birthDate'),
+    cep: getValue('cust-cep'),
+    street: getValue('cust-street'),
+    number: getValue('cust-number'),
+    complement: getValue('cust-complement'),
+    neighborhood: getValue('cust-neighborhood'),
+    city: getValue('cust-city'),
+    state: getValue('cust-state'),
+    paymentMethod: getValue('cust-payment') || 'Pix',
+    updatedAt: serverTimestamp()
     };
 
     localStorage.setItem('studio_customer', JSON.stringify(customerData));
@@ -469,7 +495,47 @@ async function processCheckout(event) {
     };
 
     try {
-        await addDoc(collection(db, "customers"), customerData);
+      const customerPhoneKey = customerData.phone.replace(/\D/g, '');
+
+const customerEmailKey = customerData.email
+    .toLowerCase()
+    .replace(/\s/g, '');
+
+const customerKey =
+    customerPhoneKey ||
+    customerEmailKey ||
+    crypto.randomUUID();
+
+const customerRef = doc(
+    db,
+    "customers",
+    customerKey
+);
+
+const existingCustomer = await getDoc(customerRef);
+
+if (existingCustomer.exists()) {
+    await setDoc(
+        customerRef,
+        {
+            ...existingCustomer.data(),
+            ...customerData,
+            createdAt:
+                existingCustomer.data().createdAt ||
+                serverTimestamp(),
+            updatedAt: serverTimestamp()
+        },
+        { merge: true }
+    );
+} else {
+    await setDoc(
+        customerRef,
+        {
+            ...customerData,
+            createdAt: serverTimestamp()
+        }
+    );
+}
         const orderRef = await addDoc(collection(db, "orders"), orderData);
 
         if (appliedCoupon && calcCommission > 0) {
