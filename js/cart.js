@@ -814,7 +814,13 @@ async function processCheckout(event) {
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registrando pedido...';
 
-    // FUNÇÃO AUXILIAR ÚNICA PARA OBTER VALORES DOS INPUTS
+    const getValue = id =>
+    document.getElementById(id)?.value?.trim() || '';
+
+    // =========================================================
+    // CLIENTE — DADOS CONFIÁVEIS
+    // =========================================================
+
     const getValue = (...ids) => {
         for (const id of ids) {
             const el = document.getElementById(id);
@@ -825,7 +831,6 @@ async function processCheckout(event) {
         return "";
     };
 
-    // 1. DADOS DO CLIENTE
     const customerData = {
         name: getValue("cust-name"),
         email: getValue("cust-email", "cust-mail"),
@@ -845,26 +850,36 @@ async function processCheckout(event) {
     if (!customerData.name) {
         alert("Informe o nome do cliente.");
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fab fa-whatsapp me-2"></i>Enviar Pedido via WhatsApp';
+        submitBtn.innerHTML =
+            '<i class="fab fa-whatsapp me-2"></i>Enviar Pedido via WhatsApp';
         return;
     }
 
     if (!customerData.phone) {
         alert("Informe o telefone do cliente.");
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fab fa-whatsapp me-2"></i>Enviar Pedido via WhatsApp';
+        submitBtn.innerHTML =
+            '<i class="fab fa-whatsapp me-2"></i>Enviar Pedido via WhatsApp';
         return;
     }
 
-    // 2. IDENTIDADE ÚNICA DO CLIENTE (CHAVE PADRONIZADA)
+    // =========================================================
+    // IDENTIDADE ÚNICA DO CLIENTE
+    // =========================================================
+
     const normalizedPhone = customerData.phone.replace(/\D/g, "");
-    const normalizedEmail = customerData.email.toLowerCase().trim();
+
+    const normalizedEmail = customerData.email
+        .toLowerCase()
+        .trim();
 
     let customerId;
+
     if (normalizedPhone) {
         customerId = `phone_${normalizedPhone}`;
     } else if (normalizedEmail) {
-        customerId = `email_${normalizedEmail.replace(/[^a-z0-9]/gi, "_")}`;
+        customerId = `email_${normalizedEmail
+            .replace(/[^a-z0-9]/gi, "_")}`;
     } else {
         const fallback = `${customerData.name}_${customerData.city}`
             .toLowerCase()
@@ -876,7 +891,30 @@ async function processCheckout(event) {
         customerId = `customer_${fallback || Date.now()}`;
     }
 
-    // 3. CÁLCULO DE VALORES E COMISSÃO
+    const customerRef = doc(db, "customers", customerId);
+
+    const existingCustomer = await getDoc(customerRef);
+
+    if (!existingCustomer.exists()) {
+        customerData.createdAt = serverTimestamp();
+    }
+
+    await setDoc(
+        customerRef,
+        customerData,
+        { merge: true }
+    );
+
+    // Mantém os dados disponíveis localmente
+    localStorage.setItem(
+        "studio_customer",
+        JSON.stringify({
+            ...customerData,
+            phone: customerData.phone,
+            email: customerData.email
+        })
+    );
+
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
     let calcDiscount = 0;
@@ -898,9 +936,9 @@ async function processCheckout(event) {
 
     const finalTotal = subtotal - calcDiscount;
 
-    // 4. ESTRUTURAÇÃO DO PEDIDO
-    const orderData = {
+        const orderData = {
         customerId: customerId,
+
         customer: {
             name: customerData.name,
             email: customerData.email,
@@ -915,16 +953,20 @@ async function processCheckout(event) {
             state: customerData.state,
             paymentMethod: customerData.paymentMethod
         },
+
         items: cart.map(item => ({
             id: item.id,
             name: item.name,
             price: Number(item.price) || 0,
             quantity: Number(item.quantity) || 1,
-            total: (Number(item.price) || 0) * (Number(item.quantity) || 1)
+            total: (Number(item.price) || 0) *
+                   (Number(item.quantity) || 1)
         })),
+
         subtotal: subtotal,
         discountAmount: calcDiscount,
         totalAmount: finalTotal,
+
         coupon: appliedCoupon
             ? {
                 code: appliedCoupon.code,
@@ -932,43 +974,55 @@ async function processCheckout(event) {
                 commissionAmount: calcCommission
             }
             : null,
+
         status: "Pendente",
         createdAt: serverTimestamp()
     };
 
     try {
-        // 5. SALVAR/ATUALIZAR CLIENTE NO FIRESTORE
-        const customerRef = doc(db, "customers", customerId);
-        const existingCustomer = await getDoc(customerRef);
+      const customerPhoneKey = customerData.phone.replace(/\D/g, '');
 
-        if (existingCustomer.exists()) {
-            await setDoc(
-                customerRef,
-                {
-                    ...existingCustomer.data(),
-                    ...customerData,
-                    createdAt: existingCustomer.data().createdAt || serverTimestamp(),
-                    updatedAt: serverTimestamp()
-                },
-                { merge: true }
-            );
-        } else {
-            await setDoc(
-                customerRef,
-                {
-                    ...customerData,
-                    createdAt: serverTimestamp()
-                }
-            );
+const customerEmailKey = customerData.email
+    .toLowerCase()
+    .replace(/\s/g, '');
+
+const customerKey =
+    customerPhoneKey ||
+    customerEmailKey ||
+    crypto.randomUUID();
+
+const customerRef = doc(
+    db,
+    "customers",
+    customerKey
+);
+
+const existingCustomer = await getDoc(customerRef);
+
+if (existingCustomer.exists()) {
+    await setDoc(
+        customerRef,
+        {
+            ...existingCustomer.data(),
+            ...customerData,
+            createdAt:
+                existingCustomer.data().createdAt ||
+                serverTimestamp(),
+            updatedAt: serverTimestamp()
+        },
+        { merge: true }
+    );
+} else {
+    await setDoc(
+        customerRef,
+        {
+            ...customerData,
+            createdAt: serverTimestamp()
         }
-
-        // SALVAR DADOS NO LOCALSTORAGE
-        localStorage.setItem("studio_customer", JSON.stringify(customerData));
-
-        // 6. SALVAR PEDIDO NO FIRESTORE
+    );
+}
         const orderRef = await addDoc(collection(db, "orders"), orderData);
 
-        // 7. REGISTRAR COMISSÃO (SE HOUVER CUPOM)
         if (appliedCoupon && calcCommission > 0) {
             await addDoc(collection(db, "commissions"), {
                 orderId: orderRef.id,
@@ -983,7 +1037,6 @@ async function processCheckout(event) {
             });
         }
 
-        // 8. GERAR MENSAGEM DO WHATSAPP
         const whatsappTarget = "5511986215473";
         let message = `*NOVO PEDIDO #${orderRef.id.slice(-6).toUpperCase()} - SHINE EXPRESS*\n\n`;
         message += `*CLIENTE:* ${customerData.name}\n`;
@@ -1006,19 +1059,16 @@ async function processCheckout(event) {
         message += `\n*TOTAL FINAL:* R$ ${finalTotal.toFixed(2).replace('.', ',')}\n\n`;
         message += `Aguardando confirmação do frete e chave PIX/link de pagamento.`;
 
-        // LIMPAR CARRINHO E REDIRECIONAR
         localStorage.removeItem('studio_cart');
         cart = [];
         appliedCoupon = null;
-        if (typeof updateCart === 'function') updateCart();
+        updateCart();
 
         window.open(`https://wa.me/${whatsappTarget}?text=${encodeURIComponent(message)}`, '_blank');
 
         const checkoutModalEl = document.getElementById('checkoutModal');
-        if (checkoutModalEl) {
-            const modalInstance = bootstrap.Modal.getInstance(checkoutModalEl);
-            if (modalInstance) modalInstance.hide();
-        }
+        const modalInstance = bootstrap.Modal.getInstance(checkoutModalEl);
+        if (modalInstance) modalInstance.hide();
 
     } catch (error) {
         console.error("Erro ao salvar o pedido:", error);
