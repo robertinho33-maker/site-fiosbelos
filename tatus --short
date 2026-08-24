@@ -1,0 +1,17 @@
+[1mdiff --git a/js/cart.js b/js/cart.js[m
+[1mindex 10f5587..dc2ae92 100644[m
+[1m--- a/js/cart.js[m
+[1m+++ b/js/cart.js[m
+[36m@@ -634,12 +634,6 @@[m [mfunction truncate(str, length) {[m
+     return str.length > length ? str.substring(0, length) + '...' : str;[m
+ }[m
+ [m
+[31m-function escapeHTML(str) {[m
+[31m-    return String(str || '').replace(/[&<>"']/g, m => ({[m
+[31m-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'[m
+[31m-    })[m]);[m
+[31m-}[m
+[31m-[m
+ // 4. GERENCIAMENTO DO CARRINHO[m
+ function addToCart(productId) {[m
+     const product = products.find(p => p.id === productId);[m
