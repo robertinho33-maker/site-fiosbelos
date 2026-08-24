@@ -1,16 +1,161 @@
 import { db } from "./firebase-config.js";
+
 import {
     collection,
-    addDoc,
     doc,
+    getDocs,
     getDoc,
     setDoc,
+    updateDoc,
+    deleteDoc,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-// ESTADO GLOBAL
+
 let products = [];
-let cart = JSON.parse(localStorage.getItem('studio_cart')) || [];
-let appliedCoupon = null;
+let orders = [];
+let customers = [];
+let coupons = [];
+let commissions = [];
+
+const money = value =>
+    Number(value || 0).toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+    });
+
+const normalize = value =>
+    String(value || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+
+const onlyDigits = value =>
+    String(value || "").replace(/\D/g, "");
+
+const escapeHTML = value =>
+    String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+
+function getTimestamp(value) {
+    if (!value) return 0;
+
+    if (typeof value.toMillis === "function") {
+        return value.toMillis();
+    }
+
+    if (typeof value.toDate === "function") {
+        return value.toDate().getTime();
+    }
+
+    if (value instanceof Date) {
+        return value.getTime();
+    }
+
+    const date = new Date(value);
+
+    return Number.isNaN(date.getTime())
+        ? 0
+        : date.getTime();
+}
+
+function formatDate(value) {
+    const timestamp = getTimestamp(value);
+
+    return timestamp
+        ? new Date(timestamp).toLocaleDateString("pt-BR")
+        : "-";
+}
+
+function normalizePrice(value) {
+    if (typeof value === "number") {
+        return value;
+    }
+
+    let text = String(value || "0")
+        .replace(/\s/g, "")
+        .replace("R$", "");
+
+    if (text.includes(",") && text.includes(".")) {
+        text = text
+            .replace(/\./g, "")
+            .replace(",", ".");
+    } else {
+        text = text.replace(",", ".");
+    }
+
+    return Number(text) || 0;
+}
+
+function getCustomerFromOrder(order) {
+    if (order.customer && typeof order.customer === "object") {
+        return {
+            name: order.customer.name || "",
+            email: order.customer.email || "",
+            phone: order.customer.phone || "",
+            birthDate: order.customer.birthDate || "",
+            cep: order.customer.cep || "",
+            street: order.customer.street || "",
+            number: order.customer.number || "",
+            complement: order.customer.complement || "",
+            neighborhood: order.customer.neighborhood || "",
+            city: order.customer.city || "",
+            state: order.customer.state || "",
+            paymentMethod: order.customer.paymentMethod || ""
+        };
+    }
+
+    // Compatibilidade com pedidos antigos
+    return {
+        name:
+            order.customerName ||
+            order.nomeCliente ||
+            order.name ||
+            "Cliente",
+
+        email:
+            order.email ||
+            "",
+
+        phone:
+            order.phone ||
+            order.telefone ||
+            "",
+
+        birthDate:
+            order.birthDate ||
+            "",
+
+        city:
+            order.city ||
+            "",
+
+        state:
+            order.state ||
+            "",
+
+        paymentMethod:
+            order.paymentMethod ||
+            ""
+    };
+}
+
+function getCouponFromOrder(order) {
+    if (order.coupon && typeof order.coupon === "object") {
+        return order.coupon;
+    }
+
+    return {
+        code: order.couponCode || "",
+        affiliateName: "",
+        commissionAmount: 0
+    };
+}
 
 // 1. AUTO-PREENCHIMENTO DE DADOS DO CLIENTE
 function loadSavedCustomerData() {
@@ -74,6 +219,244 @@ async function loadProductsFromCSV() {
         const grid = document.getElementById('product-grid');
         if (grid) grid.innerHTML = `<div class="col-12 text-center py-5 text-danger">Erro ao carregar os produtos do catálogo. Verifique o arquivo CSV.</div>`;
     }
+}
+
+function renderOrders() {
+    const tbody = document.getElementById("admin-orders-list");
+
+    if (!tbody) return;
+
+    const search = normalize(
+        document.getElementById("orders-search")?.value
+    );
+
+    const status =
+        document.getElementById("orders-status-filter")?.value || "";
+
+    const dateFrom =
+        document.getElementById("orders-date-from")?.value || "";
+
+    const dateTo =
+        document.getElementById("orders-date-to")?.value || "";
+
+    const filtered = orders.filter(order => {
+
+        const customer = getCustomerFromOrder(order);
+
+        const searchable = normalize(`
+            ${order.id}
+            ${customer.name}
+            ${customer.phone}
+            ${customer.email}
+        `);
+
+        if (
+            search &&
+            !searchable.includes(search)
+        ) {
+            return false;
+        }
+
+        if (
+            status &&
+            order.status !== status
+        ) {
+            return false;
+        }
+
+        const timestamp =
+            getTimestamp(order.createdAt);
+
+        if (dateFrom) {
+            const start =
+                new Date(`${dateFrom}T00:00:00`).getTime();
+
+            if (timestamp < start) {
+                return false;
+            }
+        }
+
+        if (dateTo) {
+            const end =
+                new Date(`${dateTo}T23:59:59`).getTime();
+
+            if (timestamp > end) {
+                return false;
+            }
+        }
+
+        return true;
+    });
+
+    const total = filtered.reduce(
+        (sum, order) =>
+            sum + Number(order.totalAmount || 0),
+        0
+    );
+
+    const paid = filtered
+        .filter(order => order.status === "Pago")
+        .reduce(
+            (sum, order) =>
+                sum + Number(order.totalAmount || 0),
+            0
+        );
+
+    const pending = filtered
+        .filter(order => order.status === "Pendente")
+        .reduce(
+            (sum, order) =>
+                sum + Number(order.totalAmount || 0),
+            0
+        );
+
+    const average =
+        filtered.length
+            ? total / filtered.length
+            : 0;
+
+    setSummary("orders-summary", [
+        {
+            label: "Pedidos",
+            value: filtered.length
+        },
+        {
+            label: "Valor filtrado",
+            value: money(total)
+        },
+        {
+            label: "Recebido",
+            value: money(paid)
+        },
+        {
+            label: "Pendente",
+            value: money(pending)
+        },
+        {
+            label: "Ticket médio",
+            value: money(average)
+        }
+    ]);
+
+    if (!filtered.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="admin-empty">
+                    Nenhum pedido encontrado.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(order => {
+
+        const customer =
+            getCustomerFromOrder(order);
+
+        const coupon =
+            getCouponFromOrder(order);
+
+        return `
+            <tr>
+
+                <td>
+                    <strong>
+                        #${escapeHTML(
+                            order.id.substring(0, 8)
+                        )}
+                    </strong>
+                </td>
+
+                <td>
+                    ${formatDate(order.createdAt)}
+                </td>
+
+                <td>
+                    <strong>
+                        ${escapeHTML(
+                            customer.name || "Cliente"
+                        )}
+                    </strong>
+
+                    <br>
+
+                    <small class="text-muted">
+                        ${escapeHTML(
+                            customer.phone || "-"
+                        )}
+                    </small>
+                </td>
+
+                <td>
+                    <strong>
+                        ${money(order.totalAmount)}
+                    </strong>
+                </td>
+
+                <td>
+                    ${
+                        coupon.code
+                            ? `
+                                <span class="badge bg-light text-dark">
+                                    ${escapeHTML(coupon.code)}
+                                </span>
+                              `
+                            : "-"
+                    }
+                </td>
+
+                <td>
+                    <select
+                        class="form-select form-select-sm admin-status"
+                        onchange="
+                            updateOrderStatus(
+                                '${order.id}',
+                                this.value
+                            )
+                        "
+                    >
+                        ${
+                            [
+                                "Pendente",
+                                "Pago",
+                                "Enviado",
+                                "Cancelado"
+                            ]
+                            .map(statusOption => `
+                                <option
+                                    value="${statusOption}"
+                                    ${
+                                        order.status === statusOption
+                                            ? "selected"
+                                            : ""
+                                    }
+                                >
+                                    ${statusOption}
+                                </option>
+                            `)
+                            .join("")
+                        }
+                    </select>
+                </td>
+
+                <td>
+                    <button
+                        class="btn btn-sm btn-outline-primary"
+                        onclick="
+                            viewOrder('${order.id}')
+                        "
+                        title="Ver pedido"
+                    >
+                        <i class="fa fa-eye"></i>
+                    </button>
+                </td>
+
+            </tr>
+        `;
+
+    }).join("");
 }
 
 function parseCSV(text) {
@@ -434,23 +817,103 @@ async function processCheckout(event) {
     const getValue = id =>
     document.getElementById(id)?.value?.trim() || '';
 
-const customerData = {
-    name: getValue('cust-name'),
-    email: getValue('cust-email'),
-    phone: getValue('cust-phone'),
-    birthDate: getValue('cust-birthDate'),
-    cep: getValue('cust-cep'),
-    street: getValue('cust-street'),
-    number: getValue('cust-number'),
-    complement: getValue('cust-complement'),
-    neighborhood: getValue('cust-neighborhood'),
-    city: getValue('cust-city'),
-    state: getValue('cust-state'),
-    paymentMethod: getValue('cust-payment') || 'Pix',
-    updatedAt: serverTimestamp()
+    // =========================================================
+    // CLIENTE — DADOS CONFIÁVEIS
+    // =========================================================
+
+    const getValue = (...ids) => {
+        for (const id of ids) {
+            const el = document.getElementById(id);
+            if (el && el.value !== undefined) {
+                return el.value.trim();
+            }
+        }
+        return "";
     };
 
-    localStorage.setItem('studio_customer', JSON.stringify(customerData));
+    const customerData = {
+        name: getValue("cust-name"),
+        email: getValue("cust-email", "cust-mail"),
+        phone: getValue("cust-phone"),
+        birthDate: getValue("cust-birthDate", "cust-birth-date", "cust-nascimento"),
+        cep: getValue("cust-cep"),
+        street: getValue("cust-street"),
+        number: getValue("cust-number"),
+        complement: getValue("cust-complement"),
+        neighborhood: getValue("cust-neighborhood"),
+        city: getValue("cust-city"),
+        state: getValue("cust-state", "cust-uf"),
+        paymentMethod: getValue("cust-payment") || "Pix",
+        updatedAt: serverTimestamp()
+    };
+
+    if (!customerData.name) {
+        alert("Informe o nome do cliente.");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML =
+            '<i class="fab fa-whatsapp me-2"></i>Enviar Pedido via WhatsApp';
+        return;
+    }
+
+    if (!customerData.phone) {
+        alert("Informe o telefone do cliente.");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML =
+            '<i class="fab fa-whatsapp me-2"></i>Enviar Pedido via WhatsApp';
+        return;
+    }
+
+    // =========================================================
+    // IDENTIDADE ÚNICA DO CLIENTE
+    // =========================================================
+
+    const normalizedPhone = customerData.phone.replace(/\D/g, "");
+
+    const normalizedEmail = customerData.email
+        .toLowerCase()
+        .trim();
+
+    let customerId;
+
+    if (normalizedPhone) {
+        customerId = `phone_${normalizedPhone}`;
+    } else if (normalizedEmail) {
+        customerId = `email_${normalizedEmail
+            .replace(/[^a-z0-9]/gi, "_")}`;
+    } else {
+        const fallback = `${customerData.name}_${customerData.city}`
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]+/g, "_")
+            .replace(/^_|_$/g, "");
+
+        customerId = `customer_${fallback || Date.now()}`;
+    }
+
+    const customerRef = doc(db, "customers", customerId);
+
+    const existingCustomer = await getDoc(customerRef);
+
+    if (!existingCustomer.exists()) {
+        customerData.createdAt = serverTimestamp();
+    }
+
+    await setDoc(
+        customerRef,
+        customerData,
+        { merge: true }
+    );
+
+    // Mantém os dados disponíveis localmente
+    localStorage.setItem(
+        "studio_customer",
+        JSON.stringify({
+            ...customerData,
+            phone: customerData.phone,
+            email: customerData.email
+        })
+    );
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
@@ -473,23 +936,45 @@ const customerData = {
 
     const finalTotal = subtotal - calcDiscount;
 
-    const orderData = {
-        customer: customerData,
+        const orderData = {
+        customerId: customerId,
+
+        customer: {
+            name: customerData.name,
+            email: customerData.email,
+            phone: customerData.phone,
+            birthDate: customerData.birthDate,
+            cep: customerData.cep,
+            street: customerData.street,
+            number: customerData.number,
+            complement: customerData.complement,
+            neighborhood: customerData.neighborhood,
+            city: customerData.city,
+            state: customerData.state,
+            paymentMethod: customerData.paymentMethod
+        },
+
         items: cart.map(item => ({
             id: item.id,
             name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-            total: item.price * item.quantity
+            price: Number(item.price) || 0,
+            quantity: Number(item.quantity) || 1,
+            total: (Number(item.price) || 0) *
+                   (Number(item.quantity) || 1)
         })),
+
         subtotal: subtotal,
         discountAmount: calcDiscount,
         totalAmount: finalTotal,
-        coupon: appliedCoupon ? {
-            code: appliedCoupon.code,
-            affiliateName: appliedCoupon.affiliateName || null,
-            commissionAmount: calcCommission
-        } : null,
+
+        coupon: appliedCoupon
+            ? {
+                code: appliedCoupon.code,
+                affiliateName: appliedCoupon.affiliateName || null,
+                commissionAmount: calcCommission
+            }
+            : null,
+
         status: "Pendente",
         createdAt: serverTimestamp()
     };
