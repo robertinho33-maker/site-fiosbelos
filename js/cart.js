@@ -1055,78 +1055,110 @@ async function processCheckout(event) {
     // 4. ESTRUTURAÇÃO DO PEDIDO
     // Modelo operacional: mantém os campos antigos para compatibilidade
     // e adiciona estruturas explícitas para pagamento, entrega e comissão.
-    const orderData = {
-        orderNumber: orderNumber,
-        customerId: customerId,
+   const orderData = {
+    // =====================================================
+    // SCHEMA V1 — CONTRATO CANÔNICO DO PEDIDO
+    // =====================================================
+    schemaVersion: "1.0",
 
-        customer: {
-            name: customerData.name,
-            email: customerData.email,
-            phone: customerData.phone,
-            birthDate: customerData.birthDate,
-            cep: customerData.cep,
-            street: customerData.street,
-            number: customerData.number,
-            complement: customerData.complement,
-            neighborhood: customerData.neighborhood,
-            city: customerData.city,
-            state: customerData.state,
-            paymentMethod: customerData.paymentMethod
-        },
+    // Identidade do pedido
+    orderNumber,
+    customerId,
 
-        items: cart.map(item => ({
-            id: item.id,
-            sku: item.sku || item.id,
-            name: item.name,
-            price: Number(item.price) || 0,
-            quantity: Number(item.quantity) || 1,
-            total: (Number(item.price) || 0) * (Number(item.quantity) || 1)
-        })),
+    // =====================================================
+    // CLIENTE
+    // =====================================================
+    customer: {
+        name: customerData.name,
+        email: customerData.email,
+        phone: customerData.phone,
+        birthDate: customerData.birthDate || null,
 
-        // Campos financeiros legados
-        subtotal: subtotal,
-        discountAmount: calcDiscount,
-        totalAmount: finalTotal,
+        address: {
+            cep: customerData.cep || "",
+            street: customerData.street || "",
+            number: customerData.number || "",
+            complement: customerData.complement || "",
+            neighborhood: customerData.neighborhood || "",
+            city: customerData.city || "",
+            state: customerData.state || ""
+        }
+    },
 
-        // Estrutura financeira operacional
-        totals: {
-            subtotal: subtotal,
-            discount: calcDiscount,
-            total: finalTotal
-        },
+    // =====================================================
+    // ITENS
+    // =====================================================
+    items: cart.map(item => ({
+        id: item.id,
+        sku: item.sku || item.id,
+        name: item.name,
+        price: Number(item.price) || 0,
+        quantity: Number(item.quantity) || 1,
+        total:
+            (Number(item.price) || 0) *
+            (Number(item.quantity) || 1)
+    })),
 
-        // Pagamento
-        payment: {
-            method: customerData.paymentMethod || "Pix",
-            status: "Pendente"
-        },
+    // =====================================================
+    // TOTAIS — ÚNICA FONTE DE VERDADE FINANCEIRA
+    // =====================================================
+    totals: {
+        subtotal,
+        discount: calcDiscount,
+        total: finalTotal
+    },
 
-        // Entrega
-        fulfillment: {
-            status: "Pendente"
-        },
+    // =====================================================
+    // PAGAMENTO
+    // =====================================================
+    payment: {
+        method: customerData.paymentMethod || "Pix",
+        status: "Pendente"
+    },
 
-        // Cupom e comissão
-        coupon: appliedCoupon
-            ? {
-                code: appliedCoupon.code,
-                affiliateName: appliedCoupon.affiliateName || null,
-                commissionAmount: calcCommission
-            }
-            : null,
+    // =====================================================
+    // ENTREGA
+    // =====================================================
+    fulfillment: {
+        status: "Pendente"
+    },
 
-        commission: {
-            applicable: Boolean(appliedCoupon && calcCommission > 0),
-            amount: calcCommission,
-            status: calcCommission > 0 ? "Pendente" : "Nao aplicavel"
-        },
+    // =====================================================
+    // CUPOM
+    // =====================================================
+    coupon: appliedCoupon
+        ? {
+            code: appliedCoupon.code,
+            affiliateName: appliedCoupon.affiliateName || null,
+            commissionAmount: calcCommission
+        }
+        : null,
 
-        // Status comercial do pedido
-        status: "Pendente",
+    // =====================================================
+    // COMISSÃO
+    // =====================================================
+    commission: {
+        applicable: Boolean(
+            appliedCoupon && calcCommission > 0
+        ),
+        amount: calcCommission,
+        status:
+            calcCommission > 0
+                ? "Pendente"
+                : "Nao aplicavel"
+    },
 
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-    };
+    // =====================================================
+    // STATUS COMERCIAL
+    // =====================================================
+    status: "Pendente",
+
+    // =====================================================
+    // AUDITORIA
+    // =====================================================
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+};
 
     try {
         // 5. SALVAR/ATUALIZAR CLIENTE NO FIRESTORE
