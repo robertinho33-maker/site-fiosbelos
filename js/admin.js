@@ -25,7 +25,9 @@ import {
 } from "./contracts/order-operations.js";
 
 import {
-    updateCommissionStatus as updateCommissionStatusOperation
+    releaseCommission,
+    payCommission,
+    cancelCommission
 } from "./contracts/commission-operations.js";
 
 let products = [];
@@ -1715,10 +1717,24 @@ async function updateCommissionStatus(id, status) {
             throw new Error("Comissão não encontrada.");
         }
 
-        await updateCommissionStatusOperation(
-            item,
-            status
-        );
+        switch (status) {
+            case "Liberada":
+                await releaseCommission(item);
+                break;
+
+            case "Paga":
+                await payCommission(item);
+                break;
+
+            case "Cancelada":
+                await cancelCommission(item);
+                break;
+
+            default:
+                throw new Error(
+                    `Status de comissão inválido: ${status}`
+                );
+        }
 
         item.payoutStatus = status;
 
