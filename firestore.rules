@@ -1,10 +1,11 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // Regras para Pedidos
     match /orders/{orderId} {
-      allow read, write: if true; // Ou 'if request.auth != null' para exigir login
+      allow read, write: if true;
     }
 
     // Regras para Clientes
@@ -19,6 +20,11 @@ service cloud.firestore {
 
     // Regras para Comissões
     match /commissions/{commissionId} {
+      allow read, write: if true;
+    }
+
+    // Contador sequencial dos pedidos
+    match /counters/{counterId} {
       allow read, write: if true;
     }
   }
