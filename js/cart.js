@@ -13,6 +13,13 @@ import {
     runTransaction
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+import {
+    ORDER_STATUS,
+    PAYMENT_STATUS,
+    FULFILLMENT_STATUS,
+    COMMISSION_STATUS
+} from "./contracts/order-status.js";
+
 // =========================================================
 // DECLARAÇÃO OBRIGATÓRIA DE TODAS AS VARIÁVEIS GLOBAIS
 // (Devem estar no topo antes de qualquer execução)
@@ -1113,16 +1120,15 @@ async function processCheckout(event) {
     // =====================================================
     payment: {
         method: customerData.paymentMethod || "Pix",
-        status: "Pendente"
+        status: PAYMENT_STATUS.PENDENTE
     },
 
     // =====================================================
     // ENTREGA
     // =====================================================
     fulfillment: {
-        status: "Pendente"
+        status: FULFILLMENT_STATUS.PENDENTE
     },
-
     // =====================================================
     // CUPOM
     // =====================================================
@@ -1143,16 +1149,15 @@ async function processCheckout(event) {
         ),
         amount: calcCommission,
         status:
-            calcCommission > 0
-                ? "Pendente"
-                : "Nao aplicavel"
+        calcCommission > 0
+            ? COMMISSION_STATUS.PENDENTE
+            : COMMISSION_STATUS.NAO_APLICAVEL
     },
 
     // =====================================================
     // STATUS COMERCIAL
     // =====================================================
-    status: "Pendente",
-
+    status: ORDER_STATUS.PENDENTE,
     // =====================================================
     // AUDITORIA
     // =====================================================
