@@ -21,8 +21,13 @@ import {
 } from "../contracts/order-integrity.js";
 
 import {
-    canTransitionOrderStatus
-} from "../contracts/order-state-machine.js";
+    canTransitionOrderStatus,
+    canTransitionPaymentStatus
+} from "../contracts/order-transitions.js";
+
+import {
+    PAYMENT_STATUS
+} from "../contracts/order-status.js";
 
 import {
     createAuditEvent,
@@ -229,6 +234,133 @@ export async function changeOrderStatus({
 
     const changes = {
         status: nextStatus
+    };
+
+    return repository.updateOrderWithAudit(
+        orderId,
+        changes,
+        auditEvent
+    );
+}
+
+
+/**
+ * Altera o status financeiro do pedido.
+ *
+ * Fluxo:
+ *
+ * pedido
+ *   ↓
+ * validar existência
+ *   ↓
+ * validar integridade
+ *   ↓
+ * validar status financeiro
+ *   ↓
+ * criar auditoria
+ *   ↓
+ * validar auditoria
+ *   ↓
+ * Repository
+ */
+export async function changeOrderPaymentStatus({
+    orderId,
+    nextStatus,
+    actorId = null,
+    actorName = null,
+    reason = "",
+    repository = null
+} = {}) {
+
+    if (!orderId) {
+        throw new Error(
+            "ID do pedido não informado."
+        );
+    }
+
+    if (!nextStatus) {
+        throw new Error(
+            "Novo status de pagamento não informado."
+        );
+    }
+
+    if (
+        !repository ||
+        typeof repository.getOrder !== "function" ||
+        typeof repository.updateOrderWithAudit !== "function"
+    ) {
+        throw new Error(
+            "Repository de pedidos não configurado."
+        );
+    }
+
+    if (!Object.values(PAYMENT_STATUS).includes(nextStatus)) {
+        throw new Error(
+            `Status de pagamento inválido: ${nextStatus}`
+        );
+    }
+
+    const order =
+        await repository.getOrder(orderId);
+
+    if (!order) {
+        throw new Error(
+            `Pedido não encontrado: ${orderId}`
+        );
+    }
+
+    const integrity =
+        validateOrderIntegrity(order);
+
+    if (!integrity.valid) {
+        throw new Error(
+            `Pedido inválido: ${integrity.errors.join(" | ")}`
+        );
+    }
+
+    const currentStatus =
+        order.paymentStatus ||
+        order.payment?.status ||
+        PAYMENT_STATUS.PENDENTE;
+
+    if (
+        currentStatus !== nextStatus &&
+        !canTransitionPaymentStatus(
+            currentStatus,
+            nextStatus
+        )
+    ) {
+        throw new Error(
+            `Transição de pagamento inválida: ` +
+            `${currentStatus} → ${nextStatus}`
+        );
+    }
+
+    const auditEvent =
+        createAuditEvent({
+            type: "ORDER_PAYMENT_CHANGED",
+            orderId:
+                order.orderNumber ||
+                order.id,
+            actorId,
+            actorName,
+            from: currentStatus,
+            to: nextStatus,
+            reason
+        });
+
+    const auditValidation =
+        validateAuditEvent(auditEvent);
+
+    if (!auditValidation.valid) {
+        throw new Error(
+            `Evento de auditoria inválido: ${auditValidation.errors.join(" | ")}`
+        );
+    }
+
+    const changes = {
+        paymentStatus: nextStatus,
+        "payment.status": nextStatus
     };
 
     return repository.updateOrderWithAudit(
