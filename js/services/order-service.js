@@ -22,7 +22,8 @@ import {
 
 import {
     canTransitionOrderStatus,
-    canTransitionPaymentStatus
+    canTransitionPaymentStatus,
+    canTransitionFulfillmentStatus
 } from "../contracts/order-transitions.js";
 
 import {
@@ -33,6 +34,10 @@ import {
     createAuditEvent,
     validateAuditEvent
 } from "../contracts/order-audit.js";
+
+import {
+    FULFILLMENT_STATUS
+} from "../contracts/order-status.js";
 
 
 /**
@@ -372,6 +377,140 @@ export async function changeOrderPaymentStatus({
 
 
 /**
+ * Altera o status operacional de fulfillment.
+ *
+ * Fluxo:
+ *
+ * pedido
+ *   ↓
+ * validar existência
+ *   ↓
+ * validar integridade
+ *   ↓
+ * validar status de fulfillment
+ *   ↓
+ * validar transição
+ *   ↓
+ * criar auditoria
+ *   ↓
+ * validar auditoria
+ *   ↓
+ * Repository
+ */
+export async function changeOrderFulfillmentStatus({
+    orderId,
+    nextStatus,
+    actorId = null,
+    actorName = null,
+    reason = "",
+    repository = null
+} = {}) {
+
+    if (!orderId) {
+        throw new Error(
+            "ID do pedido não informado."
+        );
+    }
+
+    if (!nextStatus) {
+        throw new Error(
+            "Novo status de fulfillment não informado."
+        );
+    }
+
+    if (
+        !repository ||
+        typeof repository.getOrder !== "function" ||
+        typeof repository.updateOrderWithAudit !== "function"
+    ) {
+        throw new Error(
+            "Repository de pedidos não configurado."
+        );
+    }
+
+    if (
+        !Object.values(FULFILLMENT_STATUS)
+            .includes(nextStatus)
+    ) {
+        throw new Error(
+            `Status de fulfillment inválido: ${nextStatus}`
+        );
+    }
+
+    const order =
+        await repository.getOrder(orderId);
+
+    if (!order) {
+        throw new Error(
+            `Pedido não encontrado: ${orderId}`
+        );
+    }
+
+    const integrity =
+        validateOrderIntegrity(order);
+
+    if (!integrity.valid) {
+        throw new Error(
+            `Pedido inválido: ${integrity.errors.join(" | ")}`
+        );
+    }
+
+    const currentStatus =
+        order.fulfillmentStatus ||
+        order.fulfillment?.status ||
+        FULFILLMENT_STATUS.PENDENTE;
+
+    const transition =
+        canTransitionFulfillmentStatus(
+            currentStatus,
+            nextStatus
+        );
+
+    if (!transition) {
+        throw new Error(
+            `Transição de fulfillment inválida: ` +
+            `${currentStatus} → ${nextStatus}`
+        );
+    }
+
+    const auditEvent =
+        createAuditEvent({
+            type: "ORDER_FULFILLMENT_CHANGED",
+            orderId:
+                order.orderNumber ||
+                order.id,
+            actorId,
+            actorName,
+            from: currentStatus,
+            to: nextStatus,
+            reason
+        });
+
+    const auditValidation =
+        validateAuditEvent(auditEvent);
+
+    if (!auditValidation.valid) {
+        throw new Error(
+            `Evento de auditoria inválido: ` +
+            `${auditValidation.errors.join(" | ")}`
+        );
+    }
+
+    const changes = {
+        fulfillmentStatus: nextStatus,
+        "fulfillment.status": nextStatus
+    };
+
+    return repository.updateOrderWithAudit(
+        orderId,
+        changes,
+        auditEvent
+    );
+}
+
+
+
+/**
  * Cálculo financeiro.
  */
 export function calculateOrder(
@@ -470,4 +609,19 @@ export function prepareStatusChange({
             new Date().toISOString(),
         auditEvent
     };
+}
+
+/**
+ * Validação isolada de transição de fulfillment.
+ *
+ * Não persiste e não altera o pedido.
+ */
+export function validateFulfillmentTransition(
+    currentStatus,
+    nextStatus
+) {
+    return canTransitionFulfillmentStatus(
+        currentStatus,
+        nextStatus
+    );
 }
