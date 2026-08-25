@@ -29,6 +29,14 @@ import {
     getOrderTotal
 } from "./contracts/order-normalizer.js";
 
+import {
+    calculateOrderFinancials
+} from "./contracts/order-financials.js";
+
+import {
+    createOrderOperation
+} from "./services/order-service.js";
+
 
 // =========================================================
 // DECLARAÇÃO OBRIGATÓRIA DE TODAS AS VARIÁVEIS GLOBAIS
@@ -877,20 +885,37 @@ function updateCart() {
 
     if (!cartItemsContainer) return;
 
-    const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const totalCount = cart.reduce(
+        (sum, item) => sum + Number(item.quantity || 0),
+        0
+    );
 
-    let discountValue = 0;
-    if (appliedCoupon) {
-        if (appliedCoupon.type === 'percent') {
-            discountValue = (subtotal * appliedCoupon.value) / 100;
-        } else if (appliedCoupon.type === 'fixed') {
-            discountValue = appliedCoupon.value;
-        }
+    let financials;
+
+    try {
+        financials = calculateOrderFinancials(
+            cart,
+            appliedCoupon
+        );
+    } catch (error) {
+        console.error(
+            "Erro no cálculo financeiro do carrinho:",
+            error
+        );
+
+        financials = {
+            subtotal: 0,
+            discount: 0,
+            total: 0,
+            commission: 0
+        };
     }
-    if (discountValue > subtotal) discountValue = subtotal;
 
-    const finalTotal = subtotal - discountValue;
+    const {
+        subtotal,
+        discount: discountValue,
+        total: finalTotal
+    } = financials;
 
     if (badgeCount) badgeCount.innerText = totalCount;
     if (subtotalEl) subtotalEl.innerText = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
@@ -1046,26 +1071,17 @@ async function processCheckout(event) {
     }
 
     // 3. CÁLCULO DE VALORES E COMISSÃO
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const financials = calculateOrderFinancials(
+        cart,
+        appliedCoupon
+    );
 
-    let calcDiscount = 0;
-    let calcCommission = 0;
-
-    if (appliedCoupon) {
-        if (appliedCoupon.type === 'percent') {
-            calcDiscount = (subtotal * appliedCoupon.value) / 100;
-        } else {
-            calcDiscount = appliedCoupon.value;
-        }
-        if (calcDiscount > subtotal) calcDiscount = subtotal;
-
-        if (appliedCoupon.commissionPercent) {
-            const baseVal = subtotal - calcDiscount;
-            calcCommission = (baseVal * appliedCoupon.commissionPercent) / 100;
-        }
-    }
-
-    const finalTotal = subtotal - calcDiscount;
+    const {
+        subtotal,
+        discount: calcDiscount,
+        total: finalTotal,
+        commission: calcCommission
+    } = financials;
 
     const orderNumber = await generateOrderNumber();
 
@@ -1220,8 +1236,17 @@ async function processCheckout(event) {
         // SALVAR DADOS NO LOCALSTORAGE
         localStorage.setItem("studio_customer", JSON.stringify(customerData));
 
-        // 6. SALVAR PEDIDO NO FIRESTORE
-        const orderRef = await addDoc(collection(db, "orders"), orderData);
+        // 6. CRIAR PEDIDO PELO NÚCLEO OPERACIONAL
+        const createdOrder = await createOrderOperation({
+            order: orderData,
+            actorId: customerId,
+            actorName: customerData.name,
+            reason: "Pedido criado pelo checkout"
+        });
+
+        const orderRef = {
+            id: createdOrder.order.id
+        };
 
         // 7. REGISTRAR COMISSÃO (SE HOUVER CUPOM)
         if (appliedCoupon && calcCommission > 0) {
