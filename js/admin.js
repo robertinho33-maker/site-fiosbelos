@@ -19,14 +19,15 @@ import {
 } from "./contracts/order-integrity.js";
 
 import {
-    confirmOrder,
-    startOrderProcessing,
-    completeOrder,
-    cancelOrder,
     updatePaymentStatus,
     updateFulfillmentStatus,
-
 } from "./contracts/order-operations.js";
+
+import {
+    changeOrderStatus
+} from "./services/order-service.js";
+
+import * as orderRepository from "./repositories/order-repository.js";
 
 import {
     releaseCommission,
@@ -792,37 +793,37 @@ function renderOrders() {
 
 async function updateOrderStatus(orderId, newStatus) {
     try {
-        const order = orders.find(item => item.id === orderId);
+        const order = orders.find(
+            item => item.id === orderId
+        );
 
         if (!order) {
             throw new Error("Pedido não encontrado.");
         }
 
-        switch (newStatus) {
-            case "Confirmado":
-                await confirmOrder(order);
-                break;
+        const result = await changeOrderStatus({
+            orderId,
+            nextStatus: newStatus,
+            actorId: null,
+            actorName: "Painel Administrativo",
+            reason: "Alteração de status realizada pelo painel.",
+            repository: orderRepository
+        });
 
-            case "Em processamento":
-                await startOrderProcessing(order);
-                break;
+        const updatedOrder = result.order;
 
-            case "Concluido":
-                await completeOrder(order);
-                break;
+        const index = orders.findIndex(
+            item => item.id === orderId
+        );
 
-            case "Cancelado":
-                await cancelOrder(order);
-                break;
-
-            default:
-                throw new Error(
-                    `Status operacional inválido: ${newStatus}`
-                );
+        if (index !== -1) {
+            orders[index] = {
+                ...orders[index],
+                ...updatedOrder,
+                status: newStatus,
+                orderStatus: newStatus
+            };
         }
-
-        order.status = newStatus;
-        order.orderStatus = newStatus;
 
         renderOrders();
 
