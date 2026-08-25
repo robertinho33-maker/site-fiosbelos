@@ -89,25 +89,54 @@ function calculateSubtotal(items) {
     );
 }
 
-function calculateDiscount(
-    subtotal,
-    coupon
-) {
-    if (!coupon) {
-        return 0;
+function validateCoupon(coupon) {
+    if (coupon === null || coupon === undefined) {
+        return null;
     }
 
     if (
-        typeof coupon !== "object"
+        typeof coupon !== "object" ||
+        Array.isArray(coupon)
     ) {
         throw new Error(
             "Cupom inválido."
         );
     }
 
-    const value = Number(
-        coupon.value
-    );
+    const code =
+        String(coupon.code || "").trim();
+
+    if (!code) {
+        throw new Error(
+            "Cupom sem código."
+        );
+    }
+
+    if (
+        coupon.active !== undefined &&
+        coupon.active !== true
+    ) {
+        throw new Error(
+            "Cupom inativo."
+        );
+    }
+
+    const type =
+        String(coupon.type || "")
+            .trim()
+            .toLowerCase();
+
+    if (
+        type !== "percent" &&
+        type !== "fixed"
+    ) {
+        throw new Error(
+            "Tipo de cupom inválido."
+        );
+    }
+
+    const value =
+        Number(coupon.value);
 
     if (
         !isFiniteNumber(value) ||
@@ -118,23 +147,65 @@ function calculateDiscount(
         );
     }
 
+    if (
+        type === "percent" &&
+        value > 100
+    ) {
+        throw new Error(
+            "Percentual de desconto inválido."
+        );
+    }
+
+    const commissionPercent =
+        Number(
+            coupon.commissionPercent || 0
+        );
+
+    if (
+        !isFiniteNumber(
+            commissionPercent
+        ) ||
+        commissionPercent < 0 ||
+        commissionPercent > 100
+    ) {
+        throw new Error(
+            "Percentual de comissão inválido."
+        );
+    }
+
+    return {
+        ...coupon,
+        code,
+        type,
+        value,
+        commissionPercent
+    };
+}
+
+function calculateDiscount(
+    subtotal,
+    coupon
+) {
+    if (!coupon) {
+        return 0;
+    }
+
     let discount = 0;
 
     if (
         coupon.type === "percent"
     ) {
-        if (value > 100) {
-            throw new Error(
-                "Percentual de desconto inválido."
-            );
-        }
-
         discount =
-            subtotal * value / 100;
+            subtotal *
+            coupon.value /
+            100;
+
     } else if (
         coupon.type === "fixed"
     ) {
-        discount = value;
+        discount =
+            coupon.value;
+
     } else {
         throw new Error(
             "Tipo de cupom inválido."
@@ -189,21 +260,24 @@ export function calculateOrderFinancials(
     const subtotal =
         calculateSubtotal(items);
 
+    const validatedCoupon =
+        validateCoupon(coupon);
+
     const discount =
         calculateDiscount(
             subtotal,
-            coupon
+            validatedCoupon
         );
 
     const total =
         subtotal - discount;
 
-    const commission =
-        calculateCommission(
-            subtotal,
-            discount,
-            coupon
-        );
+   const commission =
+    calculateCommission(
+        subtotal,
+        discount,
+        validatedCoupon
+    );
 
     return {
         subtotal,
