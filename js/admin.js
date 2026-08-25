@@ -30,7 +30,10 @@ import {
     releaseCommission,
     payCommission,
     cancelCommission
-} from "./contracts/commission-operations.js";
+} from "./services/commission-service.js";
+
+import * as commissionRepository
+    from "./repositories/commission-repository.js";
 
 
 let products = [];
@@ -1797,15 +1800,24 @@ async function updateCommissionStatus(id, status) {
 
         switch (status) {
             case "Liberada":
-                await releaseCommission(item);
+                await releaseCommission({
+                    commissionId: item.id,
+                    repository: commissionRepository
+                });
                 break;
 
             case "Paga":
-                await payCommission(item);
+                await payCommission({
+                    commissionId: item.id,
+                    repository: commissionRepository
+                });
                 break;
 
             case "Cancelada":
-                await cancelCommission(item);
+                await cancelCommission({
+                    commissionId: item.id,
+                    repository: commissionRepository
+                });
                 break;
 
             default:
