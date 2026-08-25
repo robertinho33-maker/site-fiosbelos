@@ -34,18 +34,6 @@ import {
     cancelCommission
 } from "./contracts/commission-operations.js";
 
-import { getFunctions, httpsCallable } from "firebase/functions";
-import { app } from "./firebase-config.js";
-
-const functions = getFunctions(app);
-const setUserRole = httpsCallable(functions, "setUserRole");
-
-// Exemplo: atribuir papel admin
-await setUserRole({ uid: "USER_UID_AQUI", role: "admin" });
-
-// Exemplo: atribuir papel influencer
-await setUserRole({ uid: "USER_UID_AQUI", role: "influencer" });
-
 
 let products = [];
 let orders = [];
