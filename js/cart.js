@@ -37,6 +37,9 @@ import {
     createOrderOperation
 } from "./services/order-service.js";
 
+import * as orderRepository
+    from "./repositories/order-repository.js";
+
 
 // =========================================================
 // DECLARAÇÃO OBRIGATÓRIA DE TODAS AS VARIÁVEIS GLOBAIS
@@ -1241,7 +1244,8 @@ async function processCheckout(event) {
             order: orderData,
             actorId: customerId,
             actorName: customerData.name,
-            reason: "Pedido criado pelo checkout"
+            reason: "Pedido criado pelo checkout",
+            repository: orderRepository
         });
 
         const orderRef = {
