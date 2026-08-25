@@ -2887,11 +2887,13 @@ window.renderProductsTable = renderProductsTable;
 document.addEventListener("DOMContentLoaded", async () => {
     injectAdminStyles();
 
-    await Promise.all([
-        loadOrders(),
+    await loadOrders();
+
+    await Promise.allSettled([
         loadCustomers(),
         loadCoupons(),
         loadCommissions(),
         loadProducts()
     ]);
 });
+
