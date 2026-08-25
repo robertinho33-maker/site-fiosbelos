@@ -1497,7 +1497,9 @@ function createCommissionInterface() {
             >
                 <option value="">Todos os pagamentos</option>
                 <option value="Pendente">Pendente</option>
-                <option value="Pago">Pago</option>
+                <option value="Liberada">Liberada</option>
+                <option value="Paga">Paga</option>
+                <option value="Cancelada">Cancelada</option>
             </select>
 
             <input
@@ -1708,14 +1710,36 @@ function renderCommissions() {
                     </option>
 
                     <option
-                        value="Pago"
+                        value="Liberada"
                         ${
-                            item.payoutStatus === "Pago"
+                            item.payoutStatus === "Liberada"
                                 ? "selected"
                                 : ""
                         }
                     >
-                        Pago
+                        Liberada
+                    </option>
+
+                    <option
+                        value="Paga"
+                        ${
+                            item.payoutStatus === "Paga"
+                                ? "selected"
+                                : ""
+                        }
+                    >
+                        Paga
+                    </option>
+
+                    <option
+                        value="Cancelada"
+                        ${
+                            item.payoutStatus === "Cancelada"
+                                ? "selected"
+                                : ""
+                        }
+                    >
+                        Cancelada
                     </option>
                 </select>
             </td>
