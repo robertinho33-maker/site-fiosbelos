@@ -19,12 +19,9 @@ import {
 } from "./contracts/order-integrity.js";
 
 import {
-    updatePaymentStatus,
-    updateFulfillmentStatus,
-} from "./contracts/order-operations.js";
-
-import {
-    changeOrderStatus
+    changeOrderStatus,
+    changeOrderPaymentStatus,
+    changeOrderFulfillmentStatus
 } from "./services/order-service.js";
 
 import * as orderRepository from "./repositories/order-repository.js";
@@ -844,21 +841,41 @@ async function updateOrderStatus(orderId, newStatus) {
 
 async function handlePaymentStatus(orderId, newStatus) {
     try {
-        const order = orders.find(item => item.id === orderId);
+        const order = orders.find(
+            item => item.id === orderId
+        );
 
         if (!order) {
             throw new Error("Pedido não encontrado.");
         }
 
-        await updatePaymentStatus(order, newStatus);
+        const result = await changeOrderPaymentStatus({
+            orderId,
+            nextStatus: newStatus,
+            actorId: null,
+            actorName: "Painel Administrativo",
+            reason: "Alteração de pagamento realizada pelo painel.",
+            repository: orderRepository
+        });
 
-        order.paymentStatus = newStatus;
+        const updatedOrder = result.order;
 
-        if (!order.payment) {
-            order.payment = {};
+        const index = orders.findIndex(
+            item => item.id === orderId
+        );
+
+        if (index !== -1) {
+            orders[index] = {
+                ...orders[index],
+                ...updatedOrder,
+                paymentStatus: newStatus,
+                payment: {
+                    ...(orders[index].payment || {}),
+                    ...(updatedOrder.payment || {}),
+                    status: newStatus
+                }
+            };
         }
-
-        order.payment.status = newStatus;
 
         renderOrders();
 
@@ -880,21 +897,41 @@ async function handlePaymentStatus(orderId, newStatus) {
 
 async function handleFulfillmentStatus(orderId, newStatus) {
     try {
-        const order = orders.find(item => item.id === orderId);
+        const order = orders.find(
+            item => item.id === orderId
+        );
 
         if (!order) {
             throw new Error("Pedido não encontrado.");
         }
 
-        await updateFulfillmentStatus(order, newStatus);
+        const result = await changeOrderFulfillmentStatus({
+            orderId,
+            nextStatus: newStatus,
+            actorId: null,
+            actorName: "Painel Administrativo",
+            reason: "Alteração de fulfillment realizada pelo painel.",
+            repository: orderRepository
+        });
 
-        order.fulfillmentStatus = newStatus;
+        const updatedOrder = result.order;
 
-        if (!order.fulfillment) {
-            order.fulfillment = {};
+        const index = orders.findIndex(
+            item => item.id === orderId
+        );
+
+        if (index !== -1) {
+            orders[index] = {
+                ...orders[index],
+                ...updatedOrder,
+                fulfillmentStatus: newStatus,
+                fulfillment: {
+                    ...(orders[index].fulfillment || {}),
+                    ...(updatedOrder.fulfillment || {}),
+                    status: newStatus
+                }
+            };
         }
-
-        order.fulfillment.status = newStatus;
 
         renderOrders();
 
