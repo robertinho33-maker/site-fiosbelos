@@ -1,55 +1,57 @@
 <!-- Navbar Start -->
 <div class="container-fluid bg-light sticky-top p-0">
-  <nav class="navbar navbar-expand-lg navbar-light p-0">
-    <a href="index.html" class="navbar-brand bg-primary py-4 px-5 me-0">
-      <h1 class="mb-0"><i class="bi bi-star"></i>Fios Perfeitos</h1>
-    </a>
+    
+    <nav class="navbar navbar-expand-lg navbar-light p-0">
+        <a href="index.html" class="navbar-brand bg-primary py-4 px-5 me-0">
+            <h1 class="mb-0"><i class="bi bi-star"></i>Fios Perfeitos</h1>
+             <!-- Se logado: exibe o nome e o botão de sair (inicialmente oculto) -->
+                <div id="user-info" class="d-none align-items-center">
+                    <span id="user-display-name" class="fw-bold me-2 small text-dark"></span>
+                    <button id="btn-logout" class="btn btn-sm btn-danger py-0 px-2" onclick="logoutUser()" title="Sair">
+                        <i class="fa fa-sign-out-alt"></i>
+                    </button>
+                </div>
+        </a>
+        <button type="button" class="navbar-toggler me-4" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse p-3" id="navbarCollapse">
+            <div class="navbar-nav mx-auto">
+                <a href="index.html" class="nav-item nav-link">Início</a>
+                <a href="../admin.html" class="nav-item nav-link">ADM</a>
+                <a href="#" class="nav-item nav-link">Serviços</a>
+                <a href="#" class="nav-item nav-link">Preços</a>
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle active" data-bs-toggle="dropdown">Páginas</a>
+                    <div class="dropdown-menu bg-light mt-2">
+                        <a href="#" class="dropdown-item">Galeria de Fotos</a>
+                        <a href="#" class="dropdown-item">Blog de Beleza</a>
+                        <a href="#" class="dropdown-item">Nossa Equipe</a>
+                        <a href="#" class="dropdown-item active">Depoimentos</a>
+                        <a href="#" class="dropdown-item text-primary fw-bold">Painel Admin</a>
+                        <a href="#" class="dropdown-item">Página 404</a>
+                    </div>
+                </div>
+                <a href="#" class="nav-item nav-link">Contato</a>
+            </div>
 
-    <button type="button" class="navbar-toggler me-4" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+            <!-- ÁREA DO USUÁRIO NA NAVBAR -->
+            <div class="d-flex align-items-center me-3" id="user-auth-section">
+                <!-- Se deslogado: exibe botão de login -->
+                <button id="btn-login" class="btn btn-sm btn-outline-primary me-2" onclick="loginWithGoogle()">
+                    <i class="fa fa-user me-1"></i> Entrar
+                </button>
 
-    <div class="collapse navbar-collapse p-3" id="navbarCollapse">
-      <!-- Links públicos (visíveis para todos) -->
-      <div class="navbar-nav mx-auto">
-        <a href="index.html" class="nav-item nav-link">Início</a>
-        <a href="service.html" class="nav-item nav-link">Serviços</a>
-        <a href="price.html" class="nav-item nav-link">Preços</a>
-        <a href="gallery.html" class="nav-item nav-link">Galeria</a>
-        <a href="blog.html" class="nav-item nav-link">Blog</a>
-        <a href="team.html" class="nav-item nav-link">Equipe</a>
-        <a href="testimonial.html" class="nav-item nav-link">Depoimentos</a>
-        <a href="contact.html" class="nav-item nav-link">Contato</a>
-      </div>
+               
+            </div>
 
-      <!-- Área de login/admin -->
-      <div class="d-flex align-items-center me-3">
-        <!-- Botão de login (visitante) -->
-        <div id="login-container">
-          <button id="login-btn" class="btn btn-sm btn-outline-primary">
-            <i class="fa fa-user me-1"></i> Entrar com Google
-          </button>
+            <div class="d-flex">
+                <a class="btn btn-primary btn-sm-square me-3" href="https://www.facebook.com/"><i class="fab fa-facebook-f"></i></a>
+                <a class="btn btn-primary btn-sm-square me-3" href="https://www.instagram.com/fiosperfeitos/"><i class="fab fa-instagram"></i></a>
+                <a class="btn btn-primary btn-sm-square" href="https://www.linkedin.com/company/fiosperfeitos"><i class="fab fa-linkedin-in"></i></a>
+            </div>
         </div>
-
-        <!-- Painel admin/influencer (oculto até logar) -->
-        <div id="admin-container" style="display:none;">
-          <ul class="navbar-nav">
-            <li id="menu-orders" class="nav-item nav-link">Pedidos</li>
-            <li id="menu-customers" class="nav-item nav-link">Clientes</li>
-            <li id="menu-coupons" class="nav-item nav-link">Cupons</li>
-            <li id="menu-commissions" class="nav-item nav-link">Comissões</li>
-          </ul>
-          <button id="logout-btn" class="btn btn-sm btn-danger ms-2">Sair</button>
-        </div>
-      </div>
-
-      <!-- Redes sociais -->
-      <div class="d-flex">
-        <a class="btn btn-primary btn-sm-square me-3" href="https://www.facebook.com/"><i class="fab fa-facebook-f"></i></a>
-        <a class="btn btn-primary btn-sm-square me-3" href="https://www.instagram.com/fiosperfeitos/"><i class="fab fa-instagram"></i></a>
-        <a class="btn btn-primary btn-sm-square" href="https://www.linkedin.com/company/fiosperfeitos"><i class="fab fa-linkedin-in"></i></a>
-      </div>
-    </div>
-  </nav>
+    </nav>
 </div>
 <!-- Navbar End -->
