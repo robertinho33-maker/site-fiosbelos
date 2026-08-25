@@ -445,31 +445,34 @@ async function loadOrders() {
     if (!tbody) return;
 
     try {
-        // Não usamos orderBy aqui.
-        // Isso evita problemas com pedidos antigos sem createdAt.
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="10" class="text-center">
+                    Carregando pedidos do Firebase...
+                </td>
+            </tr>
+        `;
+
         const snapshot = await getDocs(collection(db, "orders"));
 
-      orders = snapshot.docs.map(item => {
-    const normalizedOrder =
-        normalizeOrder({
-            id: item.id,
-            ...item.data()
+        orders = snapshot.docs.map(item => {
+            const rawOrder = {
+                id: item.id,
+                ...item.data()
+            };
+
+            const normalizedOrder = normalizeOrder(rawOrder);
+
+            const integrity = validateOrderIntegrity(normalizedOrder);
+
+            return {
+                ...normalizedOrder,
+                integrity: {
+                    valid: integrity.valid,
+                    errors: integrity.errors
+                }
+            };
         });
-
-    const integrity =
-        validateOrderIntegrity(
-            normalizedOrder
-        );
-
-    return {
-        ...normalizedOrder,
-
-        integrity: {
-            valid: integrity.valid,
-            errors: integrity.errors
-        }
-    };
-});
 
         orders.sort(
             (a, b) =>
@@ -483,14 +486,22 @@ async function loadOrders() {
     } catch (error) {
         console.error("Erro ao carregar pedidos:", error);
 
+        const message =
+            error?.message ||
+            String(error);
+
         tbody.innerHTML = `
             <tr>
-                <td colspan="10" class="admin-empty admin-danger-text">
-                    <i class="fa fa-exclamation-triangle fa-2x mb-2"></i>
-                    <br>
-                    Não foi possível carregar os pedidos.
-                    <br>
-                    <small>${escapeHTML(error.message)}</small>
+                <td colspan="10"
+                    style="padding:30px;text-align:center;color:#b02a37;">
+                    <strong>ERRO AO CARREGAR PEDIDOS</strong>
+                    <br><br>
+                    <span>${escapeHTML(message)}</span>
+                    <br><br>
+                    <small>
+                        A leitura da coleção "orders" falhou ou algum
+                        processamento do pedido apresentou erro.
+                    </small>
                 </td>
             </tr>
         `;
