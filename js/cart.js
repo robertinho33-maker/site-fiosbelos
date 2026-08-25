@@ -878,13 +878,13 @@ async function applyCoupon() {
 
 // 6. ATUALIZAÇÃO DO CARRINHO E TOTAIS
 function updateCart() {
-    localStorage.setItem('studio_cart', JSON.stringify(cart));
+    localStorage.setItem("studio_cart", JSON.stringify(cart));
 
-    const cartItemsContainer = document.getElementById('cart-items');
-    const badgeCount = document.getElementById('cart-badge-count');
-    const subtotalEl = document.getElementById('cart-subtotal');
-    const discountEl = document.getElementById('cart-discount');
-    const totalEl = document.getElementById('cart-total');
+    const cartItemsContainer = document.getElementById("cart-items");
+    const badgeCount = document.getElementById("cart-badge-count");
+    const subtotalEl = document.getElementById("cart-subtotal");
+    const discountEl = document.getElementById("cart-discount");
+    const totalEl = document.getElementById("cart-total");
 
     if (!cartItemsContainer) return;
 
@@ -892,6 +892,27 @@ function updateCart() {
         (sum, item) => sum + Number(item.quantity || 0),
         0
     );
+
+    if (badgeCount) {
+        badgeCount.innerText = totalCount;
+    }
+
+    // Carrinho vazio é um estado válido da interface.
+    // Não deve passar pelo motor financeiro.
+    if (cart.length === 0) {
+        if (subtotalEl) subtotalEl.innerText = "R$ 0,00";
+        if (discountEl) discountEl.innerText = "- R$ 0,00";
+        if (totalEl) totalEl.innerText = "R$ 0,00";
+
+        cartItemsContainer.innerHTML = `
+            <div class="text-center py-5 text-muted">
+                <i class="fa fa-shopping-basket fa-3x mb-3"></i>
+                <p>Seu carrinho está vazio.</p>
+            </div>
+        `;
+
+        return;
+    }
 
     let financials;
 
@@ -920,38 +941,65 @@ function updateCart() {
         total: finalTotal
     } = financials;
 
-    if (badgeCount) badgeCount.innerText = totalCount;
-    if (subtotalEl) subtotalEl.innerText = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
-    if (discountEl) discountEl.innerText = `- R$ ${discountValue.toFixed(2).replace('.', ',')}`;
-    if (totalEl) totalEl.innerText = `R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
+    if (subtotalEl) {
+        subtotalEl.innerText =
+            `R$ ${subtotal.toFixed(2).replace(".", ",")}`;
+    }
 
-    if (cart.length === 0) {
-        cartItemsContainer.innerHTML = `
-            <div class="text-center py-5 text-muted">
-                <i class="fa fa-shopping-basket fa-3x mb-3"></i>
-                <p>Seu carrinho está vazio.</p>
-            </div>
-        `;
-        return;
+    if (discountEl) {
+        discountEl.innerText =
+            `- R$ ${discountValue.toFixed(2).replace(".", ",")}`;
+    }
+
+    if (totalEl) {
+        totalEl.innerText =
+            `R$ ${finalTotal.toFixed(2).replace(".", ",")}`;
     }
 
     cartItemsContainer.innerHTML = cart.map(item => `
         <div class="d-flex align-items-center justify-content-between p-2 mb-2 bg-light rounded border">
-            <img src="${item.image}" alt="${escapeHTML(item.name)}" style="width: 50px; height: 50px; object-fit: cover;" class="rounded me-2" onerror="this.onerror=null; this.src='img/products/default.jpg';">
+            <img
+                src="${item.image}"
+                alt="${escapeHTML(item.name)}"
+                style="width: 50px; height: 50px; object-fit: cover;"
+                class="rounded me-2"
+                onerror="this.onerror=null; this.src='img/products/default.jpg';"
+            >
+
             <div class="flex-grow-1 me-2">
-                <h6 class="mb-0 text-truncate" style="max-width: 130px;">${escapeHTML(item.name)}</h6>
-                <small class="text-muted">R$ ${item.price.toFixed(2).replace('.', ',')}</small>
+                <h6 class="mb-0 text-truncate" style="max-width: 130px;">
+                    ${escapeHTML(item.name)}
+                </h6>
+
+                <small class="text-muted">
+                    R$ ${item.price.toFixed(2).replace(".", ",")}
+                </small>
             </div>
+
             <div class="d-flex align-items-center gap-1">
-                <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="changeQuantity('${item.id}', -1)">-</button>
-                <span class="px-2 font-weight-bold">${item.quantity}</span>
-                <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="changeQuantity('${item.id}', 1)">+</button>
+                <button
+                    class="btn btn-sm btn-outline-secondary py-0 px-2"
+                    onclick="changeQuantity('${item.id}', -1)"
+                >-</button>
+
+                <span class="px-2 font-weight-bold">
+                    ${item.quantity}
+                </span>
+
+                <button
+                    class="btn btn-sm btn-outline-secondary py-0 px-2"
+                    onclick="changeQuantity('${item.id}', 1)"
+                >+</button>
             </div>
-            <button class="btn btn-sm text-danger ms-2" onclick="removeFromCart('${item.id}')">
+
+            <button
+                class="btn btn-sm text-danger ms-2"
+                onclick="removeFromCart('${item.id}')"
+            >
                 <i class="fa fa-trash"></i>
             </button>
         </div>
-    `).join('');
+    `).join("");
 }
 
 // 7. CHECKOUT E INTEGRAÇÃO WHATSAPP
