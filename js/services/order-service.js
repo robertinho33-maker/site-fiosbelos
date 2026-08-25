@@ -625,3 +625,19 @@ export function validateFulfillmentTransition(
         nextStatus
     );
 }
+
+
+/**
+ * Validação isolada de transição de pagamento.
+ *
+ * Não persiste e não altera o pedido.
+ */
+export function validatePaymentTransition(
+    currentStatus,
+    nextStatus
+) {
+    return canTransitionPaymentStatus(
+        currentStatus,
+        nextStatus
+    );
+}
