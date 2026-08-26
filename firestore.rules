@@ -8,6 +8,11 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Auditoria operacional dos pedidos
+    match /orderAudit/{auditId} {
+      allow read, write: if true;
+    }
+
     // Regras para Clientes
     match /customers/{customerId} {
       allow read, write: if true;

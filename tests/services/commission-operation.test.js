@@ -1,8 +1,12 @@
 /**
- * Testes da operação de comissão — V1
+ * Testes da operação de comissão — V2
  *
  * O teste usa um Repository fake.
  * Não acessa Firebase.
+ *
+ * O Repository fake reproduz o contrato:
+ * - getCommission()
+ * - updateCommissionWithAudit()
  */
 
 import assert from "node:assert/strict";
@@ -33,6 +37,7 @@ function createFakeRepository(initialCommission) {
         calls,
 
         async getCommission(id) {
+
             calls.push({
                 operation: "getCommission",
                 id
@@ -47,11 +52,17 @@ function createFakeRepository(initialCommission) {
             };
         },
 
-        async updateCommission(id, changes) {
+        async updateCommissionWithAudit(
+            id,
+            changes,
+            auditEvent
+        ) {
+
             calls.push({
-                operation: "updateCommission",
+                operation: "updateCommissionWithAudit",
                 id,
-                changes
+                changes,
+                auditEvent
             });
 
             commission = {
@@ -60,7 +71,15 @@ function createFakeRepository(initialCommission) {
             };
 
             return {
-                ...commission
+                commission: {
+                    ...commission
+                },
+
+                audit: {
+                    id: "audit-001",
+                    ...auditEvent,
+                    commissionId: id
+                }
             };
         }
     };
@@ -142,25 +161,40 @@ assert.equal(
 
 
 // =========================================================
-// PENDENTE → LIBERADA
+// PENDENTE → LIBERADA + AUDITORIA
 // =========================================================
 
 {
-    const repository = createFakeRepository({
-        id: "commission-001",
-        payoutStatus: COMMISSION_STATUS.PENDENTE
-    });
+    const repository =
+        createFakeRepository({
+            id: "commission-001",
+            payoutStatus:
+                COMMISSION_STATUS.PENDENTE
+        });
 
     const result =
         await changeCommissionStatus({
             commissionId: "commission-001",
-            nextStatus: COMMISSION_STATUS.LIBERADA,
+            nextStatus:
+                COMMISSION_STATUS.LIBERADA,
             repository
         });
 
     assert.equal(
         result.commission.payoutStatus,
         COMMISSION_STATUS.LIBERADA
+    );
+
+    assert.ok(result.audit);
+
+    assert.equal(
+        result.audit.commissionId,
+        "commission-001"
+    );
+
+    assert.equal(
+        result.audit.type,
+        "ORDER_COMMISSION_CHANGED"
     );
 
     assert.equal(
@@ -170,25 +204,33 @@ assert.equal(
 
     assert.equal(
         repository.calls[1].operation,
-        "updateCommission"
+        "updateCommissionWithAudit"
+    );
+
+    assert.equal(
+        repository.calls[1].changes.payoutStatus,
+        COMMISSION_STATUS.LIBERADA
     );
 }
 
 
 // =========================================================
-// LIBERADA → PAGA
+// LIBERADA → PAGA + AUDITORIA
 // =========================================================
 
 {
-    const repository = createFakeRepository({
-        id: "commission-002",
-        payoutStatus: COMMISSION_STATUS.LIBERADA
-    });
+    const repository =
+        createFakeRepository({
+            id: "commission-002",
+            payoutStatus:
+                COMMISSION_STATUS.LIBERADA
+        });
 
     const result =
         await changeCommissionStatus({
             commissionId: "commission-002",
-            nextStatus: COMMISSION_STATUS.PAGA,
+            nextStatus:
+                COMMISSION_STATUS.PAGA,
             repository
         });
 
@@ -200,29 +242,46 @@ assert.equal(
     assert.ok(
         result.commission.paidAt
     );
+
+    assert.ok(result.audit);
+
+    assert.equal(
+        result.audit.commissionId,
+        "commission-002"
+    );
 }
 
 
 // =========================================================
-// LIBERADA → CANCELADA
+// LIBERADA → CANCELADA + AUDITORIA
 // =========================================================
 
 {
-    const repository = createFakeRepository({
-        id: "commission-003",
-        payoutStatus: COMMISSION_STATUS.LIBERADA
-    });
+    const repository =
+        createFakeRepository({
+            id: "commission-003",
+            payoutStatus:
+                COMMISSION_STATUS.LIBERADA
+        });
 
     const result =
         await changeCommissionStatus({
             commissionId: "commission-003",
-            nextStatus: COMMISSION_STATUS.CANCELADA,
+            nextStatus:
+                COMMISSION_STATUS.CANCELADA,
             repository
         });
 
     assert.equal(
         result.commission.payoutStatus,
         COMMISSION_STATUS.CANCELADA
+    );
+
+    assert.ok(result.audit);
+
+    assert.equal(
+        result.audit.type,
+        "ORDER_COMMISSION_CHANGED"
     );
 }
 
@@ -233,11 +292,12 @@ assert.equal(
 
 {
     const repository = {
+
         async getCommission() {
             return null;
         },
 
-        async updateCommission() {
+        async updateCommissionWithAudit() {
             throw new Error(
                 "Não deveria persistir."
             );
@@ -247,8 +307,10 @@ assert.equal(
     await assert.rejects(
         () =>
             changeCommissionStatus({
-                commissionId: "commission-inexistente",
-                nextStatus: COMMISSION_STATUS.LIBERADA,
+                commissionId:
+                    "commission-inexistente",
+                nextStatus:
+                    COMMISSION_STATUS.LIBERADA,
                 repository
             }),
         /Comissão não encontrada/
@@ -271,8 +333,10 @@ assert.equal(
     await assert.rejects(
         () =>
             changeCommissionStatus({
-                commissionId: "commission-004",
-                nextStatus: "Status inexistente",
+                commissionId:
+                    "commission-004",
+                nextStatus:
+                    "Status inexistente",
                 repository
             }),
         /Status de comissão inválido/
@@ -295,7 +359,8 @@ assert.equal(
     await assert.rejects(
         () =>
             changeCommissionStatus({
-                commissionId: "commission-005",
+                commissionId:
+                    "commission-005",
                 nextStatus:
                     COMMISSION_STATUS.PENDENTE,
                 repository
@@ -319,6 +384,7 @@ await assert.rejects(
         changeCommissionStatus({
             nextStatus:
                 COMMISSION_STATUS.LIBERADA,
+
             repository:
                 createFakeRepository({
                     id: "commission-006",
@@ -337,7 +403,9 @@ await assert.rejects(
 await assert.rejects(
     () =>
         changeCommissionStatus({
-            commissionId: "commission-007",
+            commissionId:
+                "commission-007",
+
             repository:
                 createFakeRepository({
                     id: "commission-007",
@@ -354,5 +422,5 @@ await assert.rejects(
 // =========================================================
 
 console.log(
-    "TODOS OS TESTES DE OPERAÇÃO DE COMISSÃO PASSARAM."
+    "TODOS OS TESTES DE OPERAÇÃO DE COMISSÃO + AUDITORIA PASSARAM."
 );
