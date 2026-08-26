@@ -1091,7 +1091,7 @@ if (discountEl) {
         `- R$ ${cartDiscount.toFixed(2).replace(".", ",")}`;
 }
 
-if (totalEl) {
+if (q) {
     totalEl.innerText =
         `R$ ${cartTotal.toFixed(2).replace(".", ",")}`;
 }
