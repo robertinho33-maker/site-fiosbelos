@@ -827,157 +827,64 @@ function changeQuantity(productId, delta) {
 
 // 5. VALIDAÇÃO DE CUPOM DE DESCONTO
 async function applyCoupon() {
-    const input = document.getElementById("coupon-code");
-    const msgEl = document.getElementById("coupon-message");
-
+    const input = document.getElementById('coupon-code');
+    const msgEl = document.getElementById('coupon-message');
     if (!input) return;
 
-    const rawValue = input.value ?? "";
-    const rawCode = String(rawValue).trim();
+    const rawCode = input.value.trim();
+    const normalizedCode = rawCode.toLowerCase();
 
-    const normalizedCode = rawCode
-        .toLowerCase()
-        .trim();
-
-    // =====================================================
-    // REGRA: SEM CUPOM = SEM DESCONTO
-    // =====================================================
-    const noCoupon =
-        !normalizedCode ||
-        normalizedCode === "digite seu cupom" ||
-        normalizedCode === "informe um código de cupom.";
-
-    if (noCoupon) {
-        appliedCoupon = null;
-
+    if (!normalizedCode) {
         if (msgEl) {
-            msgEl.className = "form-text small text-muted";
+            msgEl.className = "form-text small text-danger";
             msgEl.innerText = "Informe um código de cupom.";
         }
-
-        updateCart();
         return;
     }
 
     try {
-        let couponRef = doc(
-            db,
-            "coupons",
-            normalizedCode
-        );
-
+        let couponRef = doc(db, "coupons", normalizedCode);
         let couponSnap = await getDoc(couponRef);
 
         if (!couponSnap.exists()) {
-            couponRef = doc(
-                db,
-                "coupons",
-                normalizedCode.toUpperCase()
-            );
-
+            couponRef = doc(db, "coupons", normalizedCode.toUpperCase());
             couponSnap = await getDoc(couponRef);
         }
 
-        // =================================================
-        // CUPOM INVÁLIDO OU INATIVO
-        // =================================================
-        if (
-            !couponSnap.exists() ||
-            !couponSnap.data().active
-        ) {
-            appliedCoupon = null;
-
+        if (!couponSnap.exists() || !couponSnap.data().active) {
             if (msgEl) {
-                msgEl.className =
-                    "form-text small text-danger";
-
-                msgEl.innerText =
-                    "Cupom inválido ou expirado.";
+                msgEl.className = "form-text small text-danger";
+                msgEl.innerText = "Cupom inválido ou expirado.";
             }
-
+            appliedCoupon = null;
             updateCart();
             return;
         }
 
-        // =================================================
-        // CUPOM VÁLIDO
-        // =================================================
-        const couponData = couponSnap.data();
-
-        appliedCoupon = {
-            id: couponSnap.id,
-            code:
-                couponData.code ||
-                rawCode.toUpperCase(),
-            ...couponData
-        };
-
+        appliedCoupon = { id: couponSnap.id, code: couponSnap.data().code || rawCode.toUpperCase(), ...couponSnap.data() };
         if (msgEl) {
-            msgEl.className =
-                "form-text small text-success";
-
-            msgEl.innerText =
-                `Cupom ${appliedCoupon.code} aplicado com sucesso!`;
+            msgEl.className = "form-text small text-success";
+            msgEl.innerText = `Cupom ${appliedCoupon.code} aplicado com sucesso!`;
         }
-
         updateCart();
-
     } catch (err) {
-        console.error(
-            "Erro ao validar cupom:",
-            err
-        );
-
-        // Erro na validação = SEM DESCONTO
-        appliedCoupon = null;
-
+        console.error("Erro ao validar cupom:", err);
         if (msgEl) {
-            msgEl.className =
-                "form-text small text-danger";
-
-            msgEl.innerText =
-                "Erro ao validar cupom.";
+            msgEl.className = "form-text small text-danger";
+            msgEl.innerText = "Erro ao validar cupom.";
         }
-
-        updateCart();
     }
-}
-
-// Remove o cupom atualmente aplicado
-function removeCoupon() {
-    appliedCoupon = null;
-
-    const input = document.getElementById("coupon-code");
-    const msgEl = document.getElementById("coupon-message");
-    const discountEl = document.getElementById("cart-discount");
-
-    if (input) {
-        input.value = "";
-    }
-
-    if (msgEl) {
-        msgEl.className = "form-text small text-muted";
-        msgEl.innerText = "Cupom removido.";
-    }
-
-    // Remove imediatamente qualquer desconto visual.
-    if (discountEl) {
-        discountEl.innerText = "- R$ 0,00";
-    }
-
-    // Recalcula o carrinho sem cupom.
-    updateCart();
 }
 
 // 6. ATUALIZAÇÃO DO CARRINHO E TOTAIS
 function updateCart() {
-    localStorage.setItem("studio_cart", JSON.stringify(cart));
+    localStorage.setItem('studio_cart', JSON.stringify(cart));
 
-    const cartItemsContainer = document.getElementById("cart-items");
-    const badgeCount = document.getElementById("cart-badge-count");
-    const subtotalEl = document.getElementById("cart-subtotal");
-    const discountEl = document.getElementById("cart-discount");
-    const totalEl = document.getElementById("cart-total");
+    const cartItemsContainer = document.getElementById('cart-items');
+    const badgeCount = document.getElementById('cart-badge-count');
+    const subtotalEl = document.getElementById('cart-subtotal');
+    const discountEl = document.getElementById('cart-discount');
+    const totalEl = document.getElementById('cart-total');
 
     if (!cartItemsContainer) return;
 
@@ -986,160 +893,65 @@ function updateCart() {
         0
     );
 
-    if (badgeCount) {
-        badgeCount.innerText = totalCount;
+    let financials;
+
+    try {
+        financials = calculateOrderFinancials(
+            cart,
+            appliedCoupon
+        );
+    } catch (error) {
+        console.error(
+            "Erro no cálculo financeiro do carrinho:",
+            error
+        );
+
+        financials = {
+            subtotal: 0,
+            discount: 0,
+            total: 0,
+            commission: 0
+        };
     }
 
-    // Carrinho vazio é um estado válido da interface.
-    // Não deve passar pelo motor financeiro.
-    if (cart.length === 0) {
-        if (subtotalEl) subtotalEl.innerText = "R$ 0,00";
-        if (discountEl) discountEl.innerText = "- R$ 0,00";
-        if (totalEl) totalEl.innerText = "R$ 0,00";
+    const {
+        subtotal,
+        discount: discountValue,
+        total: finalTotal
+    } = financials;
 
+    if (badgeCount) badgeCount.innerText = totalCount;
+    if (subtotalEl) subtotalEl.innerText = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+    if (discountEl) discountEl.innerText = `- R$ ${discountValue.toFixed(2).replace('.', ',')}`;
+    if (totalEl) totalEl.innerText = `R$ ${finalTotal.toFixed(2).replace('.', ',')}`;
+
+    if (cart.length === 0) {
         cartItemsContainer.innerHTML = `
             <div class="text-center py-5 text-muted">
                 <i class="fa fa-shopping-basket fa-3x mb-3"></i>
                 <p>Seu carrinho está vazio.</p>
             </div>
         `;
-
         return;
     }
 
-    let financials;
-
-// =====================================================
-// CÁLCULO FINANCEIRO — ÚNICA FONTE DE VERDADE
-// =====================================================
-//
-// Somente um cupom realmente validado participa
-// do cálculo financeiro.
-//
-// Sem cupom válido:
-//   coupon = null
-//
-// O contrato financeiro calcula:
-//   - subtotal
-//   - desconto
-//   - total
-//   - comissão
-// =====================================================
-
-const couponInput =
-    document.getElementById("coupon-code");
-
-const couponText =
-    couponInput?.value ?? "";
-
-const normalizedCouponText =
-    String(couponText)
-        .trim()
-        .toLowerCase();
-
-const couponIsEmpty =
-    !normalizedCouponText ||
-    normalizedCouponText === "digite seu cupom" ||
-    normalizedCouponText === "informe um código de cupom.";
-
-if (couponIsEmpty) {
-    appliedCoupon = null;
-}
-
-const cartCoupon =
-    !couponIsEmpty &&
-    appliedCoupon &&
-    typeof appliedCoupon === "object"
-        ? appliedCoupon
-        : null;
-
-try {
-
-    financials =
-        calculateOrderFinancials(
-            cart,
-            cartCoupon
-        );
-
-} catch (error) {
-
-    console.error(
-        "Erro no cálculo financeiro do carrinho:",
-        error
-    );
-
-    return;
-}
-
-const {
-    subtotal,
-    discount: discountValue,
-    total: finalTotal
-} = financials;
-
-    const cartSubtotal = financials.subtotal;
-const cartDiscount = financials.discount;
-const cartTotal = financials.total;
-
-if (subtotalEl) {
-    subtotalEl.innerText =
-        `R$ ${cartSubtotal.toFixed(2).replace(".", ",")}`;
-}
-
-if (discountEl) {
-    discountEl.innerText =
-        `- R$ ${cartDiscount.toFixed(2).replace(".", ",")}`;
-}
-
-if (totalEl) {
-    totalEl.innerText =
-        `R$ ${cartTotal.toFixed(2).replace(".", ",")}`;
-}
-
     cartItemsContainer.innerHTML = cart.map(item => `
         <div class="d-flex align-items-center justify-content-between p-2 mb-2 bg-light rounded border">
-            <img
-                src="${item.image}"
-                alt="${escapeHTML(item.name)}"
-                style="width: 50px; height: 50px; object-fit: cover;"
-                class="rounded me-2"
-                onerror="this.onerror=null; this.src='img/products/default.jpg';"
-            >
-
+            <img src="${item.image}" alt="${escapeHTML(item.name)}" style="width: 50px; height: 50px; object-fit: cover;" class="rounded me-2" onerror="this.onerror=null; this.src='img/products/default.jpg';">
             <div class="flex-grow-1 me-2">
-                <h6 class="mb-0 text-truncate" style="max-width: 130px;">
-                    ${escapeHTML(item.name)}
-                </h6>
-
-                <small class="text-muted">
-                    R$ ${item.price.toFixed(2).replace(".", ",")}
-                </small>
+                <h6 class="mb-0 text-truncate" style="max-width: 130px;">${escapeHTML(item.name)}</h6>
+                <small class="text-muted">R$ ${item.price.toFixed(2).replace('.', ',')}</small>
             </div>
-
             <div class="d-flex align-items-center gap-1">
-                <button
-                    class="btn btn-sm btn-outline-secondary py-0 px-2"
-                    onclick="changeQuantity('${item.id}', -1)"
-                >-</button>
-
-                <span class="px-2 font-weight-bold">
-                    ${item.quantity}
-                </span>
-
-                <button
-                    class="btn btn-sm btn-outline-secondary py-0 px-2"
-                    onclick="changeQuantity('${item.id}', 1)"
-                >+</button>
+                <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="changeQuantity('${item.id}', -1)">-</button>
+                <span class="px-2 font-weight-bold">${item.quantity}</span>
+                <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="changeQuantity('${item.id}', 1)">+</button>
             </div>
-
-            <button
-                class="btn btn-sm text-danger ms-2"
-                onclick="removeFromCart('${item.id}')"
-            >
+            <button class="btn btn-sm text-danger ms-2" onclick="removeFromCart('${item.id}')">
                 <i class="fa fa-trash"></i>
             </button>
         </div>
-    `).join("");
+    `).join('');
 }
 
 // 7. CHECKOUT E INTEGRAÇÃO WHATSAPP
@@ -1262,24 +1074,9 @@ async function processCheckout(event) {
     }
 
     // 3. CÁLCULO DE VALORES E COMISSÃO
-// =====================================================
-// REGRA FINANCEIRA:
-// somente um cupom realmente aplicado pode participar
-// do cálculo do pedido.
-//
-// Se não existe cupom válido, o motor recebe null.
-// =====================================================
-
-const checkoutCoupon =
-    appliedCoupon &&
-    typeof appliedCoupon === "object"
-        ? appliedCoupon
-        : null;
-
-const financials =
-    calculateOrderFinancials(
+    const financials = calculateOrderFinancials(
         cart,
-        checkoutCoupon
+        appliedCoupon
     );
 
     const {
@@ -1364,21 +1161,21 @@ const financials =
     // =====================================================
     // CUPOM
     // =====================================================
-    coupon: checkoutCoupon
-    ? {
-        code: checkoutCoupon.code,
-        affiliateName: checkoutCoupon.affiliateName || null,
-        commissionAmount: calcCommission
-    }
-    : null,
+    coupon: appliedCoupon
+        ? {
+            code: appliedCoupon.code,
+            affiliateName: appliedCoupon.affiliateName || null,
+            commissionAmount: calcCommission
+        }
+        : null,
 
     // =====================================================
     // COMISSÃO
     // =====================================================
     commission: {
         applicable: Boolean(
-    checkoutCoupon && calcCommission > 0
-),
+            appliedCoupon && calcCommission > 0
+        ),
         amount: calcCommission,
         status:
         calcCommission > 0
@@ -1456,25 +1253,19 @@ const financials =
         };
 
         // 7. REGISTRAR COMISSÃO (SE HOUVER CUPOM)
-        if (checkoutCoupon && calcCommission > 0) {
-    await addDoc(collection(db, "commissions"), {
-        orderId: orderRef.id,
-        affiliateName:
-            checkoutCoupon.affiliateName || "Geral",
-        code:
-            checkoutCoupon.code,
-        pixKey:
-            checkoutCoupon.pixKey || "Não informada",
-        orderTotal:
-            finalTotal,
-        commissionPercent:
-            checkoutCoupon.commissionPercent || 0,
-        commissionValue:
-            calcCommission,
-        payoutStatus: "Pendente",
-        createdAt: serverTimestamp()
-    });
-}
+        if (appliedCoupon && calcCommission > 0) {
+            await addDoc(collection(db, "commissions"), {
+                orderId: orderRef.id,
+                affiliateName: appliedCoupon.affiliateName || "Geral",
+                code: appliedCoupon.code,
+                pixKey: appliedCoupon.pixKey || "Não informada",
+                orderTotal: finalTotal,
+                commissionPercent: appliedCoupon.commissionPercent || 0,
+                commissionValue: calcCommission,
+                payoutStatus: "Pendente",
+                createdAt: serverTimestamp()
+            });
+        }
 
         // 8. GERAR MENSAGEM DO WHATSAPP
         const whatsappTarget = "5511986215473";
@@ -1492,9 +1283,9 @@ const financials =
             message += `• ${item.name} (x${item.quantity}) - R$ ${(item.price * item.quantity).toFixed(2).replace('.', ',')}\n`;
         });
 
-        if (checkoutCoupon) {
-    message += `\n*CUPOM APLICADO:* ${checkoutCoupon.code} (-R$ ${calcDiscount.toFixed(2).replace('.', ',')})`;
-}
+        if (appliedCoupon) {
+            message += `\n*CUPOM APLICADO:* ${appliedCoupon.code} (-R$ ${calcDiscount.toFixed(2).replace('.', ',')})`;
+        }
         message += `\n*SUBTOTAL:* R$ ${subtotal.toFixed(2).replace('.', ',')}`;
         message += `\n*TOTAL FINAL:* R$ ${finalTotal.toFixed(2).replace('.', ',')}\n\n`;
         message += `Aguardando confirmação do frete e chave PIX/link de pagamento.`;
@@ -1527,60 +1318,11 @@ window.filterProducts = filterProducts;
 window.addToCart = addToCart;
 window.removeFromCart = removeFromCart;
 window.changeQuantity = changeQuantity;
-window.removeCoupon = removeCoupon;
 window.applyCoupon = applyCoupon;
 window.openCheckoutModal = openCheckoutModal;
 window.processCheckout = processCheckout;
 
 document.addEventListener("DOMContentLoaded", () => {
-
     loadProductsFromJSON();
     loadSavedCustomerData();
-
-    // =====================================================
-    // MONITORAMENTO DO CAMPO DE CUPOM
-    // =====================================================
-    const couponInput =
-        document.getElementById("coupon-code");
-
-    if (couponInput) {
-
-        couponInput.addEventListener(
-            "input",
-            () => {
-
-                const value =
-                    String(couponInput.value ?? "")
-                        .trim()
-                        .toLowerCase();
-
-                const noCoupon =
-                    !value ||
-                    value === "digite seu cupom" ||
-                    value === "informe um código de cupom.";
-
-                if (noCoupon) {
-
-                    // Remove imediatamente o cupom anterior.
-                    appliedCoupon = null;
-
-                    const msgEl =
-                        document.getElementById(
-                            "coupon-message"
-                        );
-
-                    if (msgEl) {
-                        msgEl.className =
-                            "form-text small text-muted";
-
-                        msgEl.innerText =
-                            "Informe um código de cupom.";
-                    }
-
-                    // Recalcula imediatamente.
-                    updateCart();
-                }
-            }
-        );
-    }
 });
