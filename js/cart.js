@@ -609,7 +609,7 @@ function renderOrders() {
                         "
                         title="Ver pedido"
                     >
-                        <i class="fa fa-eye"></i>
+                        <i class="fa-solid fa-eye"></i>
                     </button>
                 </td>
 
@@ -778,7 +778,7 @@ function renderProducts(items) {
                                 onclick="addToCart('${escapeHTML(product.id)}')"
                                 aria-label="Comprar ${escapeHTML(name)}"
                             >
-                                <i class="fa fa-cart-plus me-2"></i>
+                                <i class="fa-solid fa-cart-plus me-2"></i>
                                 Comprar
                             </button>
 
@@ -1006,7 +1006,7 @@ function updateCart() {
 
         cartItemsContainer.innerHTML = `
             <div class="text-center py-5 text-muted">
-                <i class="fa fa-shopping-basket fa-3x mb-3"></i>
+                <i class="fa-solid fa-basket-shopping fa-3x mb-3"></i>
                 <p>Seu carrinho está vazio.</p>
             </div>
         `;
@@ -1143,7 +1143,7 @@ if (totalEl) {
                 class="btn btn-sm text-danger ms-2"
                 onclick="removeFromCart('${item.id}')"
             >
-                <i class="fa fa-trash"></i>
+                <i class="fa-solid fa-trash"></i>
             </button>
         </div>
     `).join("");
@@ -1237,14 +1237,14 @@ async function processCheckout(event) {
     if (!customerData.name) {
         alert("Informe o nome do cliente.");
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fab fa-whatsapp me-2"></i>Enviar Pedido via WhatsApp';
+        submitBtn.innerHTML = '<i class="fa-brands fa-whatsapp me-2"></i>Enviar Pedido via WhatsApp';
         return;
     }
 
     if (!customerData.phone) {
         alert("Informe o telefone do cliente.");
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fab fa-whatsapp me-2"></i>Enviar Pedido via WhatsApp';
+        submitBtn.innerHTML = '<i class="fa-brands fa-whatsapp me-2"></i>Enviar Pedido via WhatsApp';
         return;
     }
 
@@ -1531,7 +1531,7 @@ const financials =
         alert("Ocorreu um erro ao registrar seu pedido.");
     } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fab fa-whatsapp me-2"></i>Enviar Pedido via WhatsApp';
+        submitBtn.innerHTML = '<i class="fa-brands fa-whatsapp me-2"></i>Enviar Pedido via WhatsApp';
     }
 }
 

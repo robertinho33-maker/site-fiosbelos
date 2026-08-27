@@ -414,7 +414,7 @@ function showAdminModal(title, body, buttons = "") {
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h4 class="mb-0">${escapeHTML(title)}</h4>
                 <button type="button" class="btn btn-sm btn-light" onclick="closeAdminModal()">
-                    <i class="fa fa-times"></i>
+                    <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
@@ -554,7 +554,7 @@ function createOrderInterface() {
                 class="btn btn-outline-secondary"
                 onclick="clearOrderFilters()"
             >
-                <i class="fa fa-eraser me-1"></i>
+                <i class="fa-solid fa-eraser me-1"></i>
                 Limpar
             </button>
         `
@@ -725,7 +725,7 @@ function renderOrders() {
                     class="badge bg-success"
                     title="Dados financeiros íntegros"
                 >
-                    <i class="fa fa-check me-1"></i>
+                    <i class="fa-solid fa-check me-1"></i>
                     Íntegro
                 </span>
               `
@@ -736,7 +736,7 @@ function renderOrders() {
                         (order.integrity?.errors || []).join(" | ")
                     )}"
                 >
-                    <i class="fa fa-exclamation-triangle me-1"></i>
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
                     Revisar
                 </span>
               `
@@ -782,7 +782,7 @@ function renderOrders() {
                             onclick="viewOrder('${order.id}')"
                             title="Ver pedido"
                         >
-                            <i class="fa fa-eye"></i>
+                            <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
                 </td>
@@ -1300,7 +1300,7 @@ function createCustomerInterface() {
                 class="btn btn-outline-secondary"
                 onclick="clearCustomerFilter()"
             >
-                <i class="fa fa-eraser me-1"></i>
+                <i class="fa-solid fa-eraser me-1"></i>
                 Limpar
             </button>
         `
@@ -1554,7 +1554,7 @@ function createCommissionInterface() {
                 class="btn btn-outline-secondary"
                 onclick="clearCommissionFilters()"
             >
-                <i class="fa fa-eraser me-1"></i>
+                <i class="fa-solid fa-eraser me-1"></i>
                 Limpar
             </button>
         `
@@ -1969,7 +1969,7 @@ function createCouponInterface() {
                 class="btn btn-outline-secondary"
                 onclick="clearCouponFilters()"
             >
-                <i class="fa fa-eraser me-1"></i>
+                <i class="fa-solid fa-eraser me-1"></i>
                 Limpar
             </button>
         `
@@ -2116,7 +2116,7 @@ function renderCoupons() {
                         onclick="editCoupon('${coupon.id}')"
                         title="Editar"
                     >
-                        <i class="fa fa-edit"></i>
+                        <i class="fa-solid fa-pen-to-square"></i>
                     </button>
 
                     <button
@@ -2132,7 +2132,7 @@ function renderCoupons() {
                                 : "Ativar"
                         }"
                     >
-                        <i class="fa fa-power-off"></i>
+                        <i class="fa-solid fa-power-off"></i>
                     </button>
 
                     <button
@@ -2140,7 +2140,7 @@ function renderCoupons() {
                         onclick="deleteCoupon('${coupon.id}')"
                         title="Excluir"
                     >
-                        <i class="fa fa-trash"></i>
+                        <i class="fa-solid fa-trash"></i>
                     </button>
                 </div>
             </td>
@@ -2258,7 +2258,7 @@ function editCoupon(id) {
                 class="btn btn-primary"
                 onclick="saveEditedCoupon('${id}')"
             >
-                <i class="fa fa-save me-1"></i>
+                <i class="fa-solid fa-floppy-disk me-1"></i>
                 Salvar
             </button>
         `
@@ -2586,7 +2586,7 @@ function createProductInterface() {
                 class="btn btn-outline-primary"
                 onclick="exportCSV()"
             >
-                <i class="fa fa-download me-1"></i>
+                <i class="fa-solid fa-download me-1"></i>
                 Exportar CSV
             </button>
         `
@@ -2809,7 +2809,7 @@ function renderProductsTable() {
                             "
                             title="Alterar URL"
                         >
-                            <i class="fa fa-image"></i>
+                            <i class="fa-solid fa-image"></i>
                         </button>
 
                         <button
@@ -2817,7 +2817,7 @@ function renderProductsTable() {
                             onclick="deleteProduct(${originalIndex})"
                             title="Remover"
                         >
-                            <i class="fa fa-trash"></i>
+                            <i class="fa-solid fa-trash"></i>
                         </button>
 
                     </div>
