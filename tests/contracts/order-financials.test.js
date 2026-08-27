@@ -71,6 +71,7 @@ function assertEqual(
                 }
             ],
             {
+                code: "TESTE10",
                 type: "percent",
                 value: 10,
                 commissionPercent: 5
@@ -117,6 +118,7 @@ function assertEqual(
                 }
             ],
             {
+                code: "TESTE30",
                 type: "fixed",
                 value: 30
             }
@@ -150,6 +152,7 @@ function assertEqual(
                 }
             ],
             {
+                code: "TESTE500",
                 type: "fixed",
                 value: 500
             }

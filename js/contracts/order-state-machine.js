@@ -122,3 +122,7 @@ export function validateOrderState(order) {
         errors
     };
 }
+
+export {
+    canTransitionOrderStatus
+} from "./order-transitions.js";

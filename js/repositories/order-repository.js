@@ -76,7 +76,8 @@ export async function createOrderWithAudit(
 
     batch.set(auditRef, {
         ...auditEvent,
-        orderId: auditEvent.orderId || orderRef.id,
+        orderId: orderRef.id,
+        orderNumber: orderData.orderNumber || null,
         createdAt:
             auditEvent.createdAt ||
             serverTimestamp()
@@ -92,7 +93,8 @@ export async function createOrderWithAudit(
         audit: {
             id: auditRef.id,
             ...auditEvent,
-            orderId: auditEvent.orderId || orderRef.id
+            orderId: orderRef.id,
+            orderNumber: orderData.orderNumber || null
         }
     };
 }
