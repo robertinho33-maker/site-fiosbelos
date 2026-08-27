@@ -23,10 +23,6 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-import {
-    COMMISSION_STATUS
-} from "../contracts/order-status.js";
-
 
 const COMMISSIONS_COLLECTION = "commissions";
 const ORDERS_COLLECTION = "orders";
@@ -59,16 +55,6 @@ export async function createCommissionWithAudit(
         );
     }
 
-    const orderId =
-        commission.orderId ||
-        commission.orderNumber;
-
-    if (!orderId) {
-        throw new Error(
-            "ID do pedido não informado para criação da comissão."
-        );
-    }
-
     const commissionRef = doc(
         collection(db, COMMISSIONS_COLLECTION)
     );
@@ -77,91 +63,44 @@ export async function createCommissionWithAudit(
         collection(db, AUDIT_COLLECTION)
     );
 
-    const orderRef = doc(
-        db,
-        ORDERS_COLLECTION,
-        orderId
-    );
-
     const batch = writeBatch(db);
-
-    // =====================================================
-    // 1. CRIA COMISSÃO OPERACIONAL
-    // =====================================================
 
     batch.set(
         commissionRef,
         {
             ...commission,
-            id: commissionRef.id,
-            commissionId: commissionRef.id,
-            orderId,
-
             createdAt:
                 commission.createdAt ||
                 serverTimestamp(),
-
             updatedAt:
                 commission.updatedAt ||
                 serverTimestamp()
         }
     );
 
-    // =====================================================
-    // 2. VINCULA COMISSÃO AO PEDIDO
-    // =====================================================
-
-    batch.update(
-        orderRef,
-        {
-            "commission.commissionId":
-                commissionRef.id,
-
-            "commission.status":
-                commission.payoutStatus ||
-                COMMISSION_STATUS.PENDENTE,
-
-            updatedAt:
-                serverTimestamp()
-        }
-    );
-
-    // =====================================================
-    // 3. REGISTRA AUDITORIA
-    // =====================================================
-
     batch.set(
         auditRef,
         {
             ...auditEvent,
             commissionId: commissionRef.id,
-            orderId,
-
             createdAt:
                 auditEvent.createdAt ||
                 serverTimestamp()
         }
     );
 
-    // =====================================================
-    // 4. COMMIT ATÔMICO
-    // =====================================================
-
     await batch.commit();
 
     return {
         commission: {
             id: commissionRef.id,
-            ...commission,
-            commissionId: commissionRef.id,
-            orderId
+            ...commission
         },
 
         audit: {
             id: auditRef.id,
             ...auditEvent,
-            commissionId: commissionRef.id,
-            orderId
+            commissionId: commissionRef.id
         }
     };
 }

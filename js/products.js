@@ -49,7 +49,7 @@ async function loadProducts() {
         grid.innerHTML = `
             <div class="col-12 text-center py-5">
 
-                <i class="bi bi-exclamation-circle fs-1 text-primary"></i>
+                <i class="fa-solid fa-circle-exclamation fs-1 text-primary"></i>
 
                 <p class="text-muted mt-3">
                     Não foi possível carregar os produtos.
@@ -393,7 +393,7 @@ function createProductCard(product) {
                         onclick="showProductDetails(this)"
                     >
                         Ver detalhes
-                        <i class="bi bi-arrow-right"></i>
+                        <i class="fa-solid fa-arrow-right"></i>
                     </button>
                 </div>
             </div>

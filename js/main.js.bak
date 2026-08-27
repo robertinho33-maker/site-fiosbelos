@@ -2,6 +2,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
     initSpinner();
+    initAnimations();
     initStickyNavbar();
     initBackToTop();
     initHeaderCarousel();
@@ -20,6 +21,50 @@ function initSpinner() {
             spinner.classList.remove("show");
         }
     }, 100);
+}
+
+/**
+ * Animações substituindo WOW.js
+ */
+function initAnimations() {
+    const elements = document.querySelectorAll(".wow");
+
+    if (!elements.length) {
+        return;
+    }
+
+    if (!("IntersectionObserver" in window)) {
+        elements.forEach((element) => {
+            element.classList.add("animated");
+        });
+        return;
+    }
+
+    const observer = new IntersectionObserver(
+        (entries, observerInstance) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) {
+                    return;
+                }
+
+                const element = entry.target;
+                const delay = element.dataset.wowDelay;
+
+                if (delay) {
+                    element.style.animationDelay = delay;
+                }
+
+                element.classList.add("animated");
+
+                observerInstance.unobserve(element);
+            });
+        },
+        {
+            threshold: 0.15
+        }
+    );
+
+    elements.forEach((element) => observer.observe(element));
 }
 
 /**
@@ -314,7 +359,7 @@ function createSimpleCarousel(container, options = {}) {
             "Anterior"
         );
         previousButton.innerHTML =
-            '<i class="fa-solid fa-chevron-left"></i>';
+            '<i class="bi bi-chevron-left"></i>';
 
         const nextButton =
             document.createElement("button");
@@ -327,7 +372,7 @@ function createSimpleCarousel(container, options = {}) {
             "Próximo"
         );
         nextButton.innerHTML =
-            '<i class="fa-solid fa-chevron-right"></i>';
+            '<i class="bi bi-chevron-right"></i>';
 
         previousButton.addEventListener(
             "click",

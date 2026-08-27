@@ -1,5 +1,3 @@
-
-
 /**
  * Commission Service — V1
  *
@@ -250,29 +248,10 @@ export async function changeCommissionStatus({
         payoutStatus: nextStatus
     };
 
-    /*
-     * O pedido mantém um snapshot operacional
-     * da comissão.
-     *
-     * commissions/{id}
-     *   → payoutStatus
-     *
-     * orders/{orderId}.commission
-     *   → status
-     *
-     * Os dois devem permanecer sincronizados.
-     */
-    const orderCommissionChanges = {
-        "commission.status": nextStatus
-    };
-
     if (
         nextStatus === COMMISSION_STATUS.PAGA
     ) {
-        const paidAt = new Date();
-
-        changes.paidAt = paidAt;
-        orderCommissionChanges["commission.paidAt"] = paidAt;
+        changes.paidAt = new Date();
     }
 
     const auditEvent =
@@ -306,10 +285,7 @@ export async function changeCommissionStatus({
         await repository.updateCommissionWithAudit(
             commissionId,
             changes,
-            auditEvent,
-            commission.orderId ||
-                commission.orderNumber,
-            orderCommissionChanges
+            auditEvent
         );
 
     return {

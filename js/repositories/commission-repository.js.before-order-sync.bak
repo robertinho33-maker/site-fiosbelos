@@ -3,13 +3,10 @@
  *
  * Responsabilidade:
  * - consultar comissão;
- * - criar comissão;
  * - atualizar comissão;
- * - sincronizar comissão + pedido;
- * - registrar auditoria atomicamente.
+ * - atualizar comissão + auditoria atomicamente.
  *
  * Este módulo NÃO decide regras de negócio.
- * Apenas persiste dados já validados pelo Service.
  */
 
 import { db } from "../firebase-config.js";
@@ -23,18 +20,15 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-import {
-    COMMISSION_STATUS
-} from "../contracts/order-status.js";
-
 
 const COMMISSIONS_COLLECTION = "commissions";
-const ORDERS_COLLECTION = "orders";
 const AUDIT_COLLECTION = "orderAudit";
 
-
 /**
- * Cria comissão + auditoria atomicamente.
+ * Cria comissão e registra auditoria
+ * dentro de uma única operação batch.
+ *
+ * O Repository apenas persiste.
  */
 export async function createCommissionWithAudit(
     commission,
@@ -59,16 +53,6 @@ export async function createCommissionWithAudit(
         );
     }
 
-    const orderId =
-        commission.orderId ||
-        commission.orderNumber;
-
-    if (!orderId) {
-        throw new Error(
-            "ID do pedido não informado para criação da comissão."
-        );
-    }
-
     const commissionRef = doc(
         collection(db, COMMISSIONS_COLLECTION)
     );
@@ -77,102 +61,49 @@ export async function createCommissionWithAudit(
         collection(db, AUDIT_COLLECTION)
     );
 
-    const orderRef = doc(
-        db,
-        ORDERS_COLLECTION,
-        orderId
-    );
-
     const batch = writeBatch(db);
-
-    // =====================================================
-    // 1. CRIA COMISSÃO OPERACIONAL
-    // =====================================================
 
     batch.set(
         commissionRef,
         {
             ...commission,
-            id: commissionRef.id,
-            commissionId: commissionRef.id,
-            orderId,
-
             createdAt:
                 commission.createdAt ||
                 serverTimestamp(),
-
             updatedAt:
                 commission.updatedAt ||
                 serverTimestamp()
         }
     );
 
-    // =====================================================
-    // 2. VINCULA COMISSÃO AO PEDIDO
-    // =====================================================
-
-    batch.update(
-        orderRef,
-        {
-            "commission.commissionId":
-                commissionRef.id,
-
-            "commission.status":
-                commission.payoutStatus ||
-                COMMISSION_STATUS.PENDENTE,
-
-            updatedAt:
-                serverTimestamp()
-        }
-    );
-
-    // =====================================================
-    // 3. REGISTRA AUDITORIA
-    // =====================================================
-
     batch.set(
         auditRef,
         {
             ...auditEvent,
             commissionId: commissionRef.id,
-            orderId,
-
             createdAt:
                 auditEvent.createdAt ||
                 serverTimestamp()
         }
     );
 
-    // =====================================================
-    // 4. COMMIT ATÔMICO
-    // =====================================================
-
     await batch.commit();
 
     return {
         commission: {
             id: commissionRef.id,
-            ...commission,
-            commissionId: commissionRef.id,
-            orderId
+            ...commission
         },
 
         audit: {
             id: auditRef.id,
             ...auditEvent,
-            commissionId: commissionRef.id,
-            orderId
+            commissionId: commissionRef.id
         }
     };
 }
 
-
-/**
- * Busca comissão.
- */
-export async function getCommission(
-    commissionId
-) {
+export async function getCommission(commissionId) {
 
     if (!commissionId) {
         throw new Error(
@@ -201,12 +132,6 @@ export async function getCommission(
 }
 
 
-/**
- * Atualiza comissão sem auditoria.
- *
- * Mantido para operações internas compatíveis
- * com versões anteriores.
- */
 export async function updateCommission(
     commissionId,
     changes
@@ -248,23 +173,15 @@ export async function updateCommission(
 
 
 /**
- * Atualiza comissão + pedido + auditoria
- * dentro de UMA ÚNICA operação batch.
+ * Atualiza comissão e registra auditoria
+ * dentro de uma única operação batch.
  *
- * Responsabilidade:
- * - atualizar commissions/{commissionId};
- * - atualizar orders/{orderId}.commission;
- * - registrar orderAudit;
- * - garantir atomicidade.
- *
- * O Repository NÃO decide se a transição é válida.
+ * O Repository apenas persiste.
  */
 export async function updateCommissionWithAudit(
     commissionId,
     changes,
-    auditEvent,
-    orderId = null,
-    orderCommissionChanges = null
+    auditEvent
 ) {
 
     if (!commissionId) {
@@ -291,45 +208,17 @@ export async function updateCommissionWithAudit(
         );
     }
 
-    if (!orderId) {
-        throw new Error(
-            "ID do pedido não informado para sincronização da comissão."
-        );
-    }
-
-    if (
-        !orderCommissionChanges ||
-        typeof orderCommissionChanges !== "object"
-    ) {
-        throw new Error(
-            "Alterações da comissão no pedido inválidas."
-        );
-    }
-
-
     const commissionRef = doc(
         db,
         COMMISSIONS_COLLECTION,
         commissionId
     );
 
-    const orderRef = doc(
-        db,
-        ORDERS_COLLECTION,
-        orderId
-    );
-
     const auditRef = doc(
         collection(db, AUDIT_COLLECTION)
     );
 
-
     const batch = writeBatch(db);
-
-
-    // =====================================================
-    // 1. ATUALIZA COMISSÃO OPERACIONAL
-    // =====================================================
 
     batch.update(
         commissionRef,
@@ -339,49 +228,23 @@ export async function updateCommissionWithAudit(
         }
     );
 
-
-    // =====================================================
-    // 2. SINCRONIZA SNAPSHOT DA COMISSÃO NO PEDIDO
-    // =====================================================
-
-    batch.update(
-        orderRef,
-        {
-            ...orderCommissionChanges,
-            updatedAt: serverTimestamp()
-        }
-    );
-
-
-    // =====================================================
-    // 3. REGISTRA AUDITORIA
-    // =====================================================
-
     batch.set(
         auditRef,
         {
             ...auditEvent,
             commissionId,
-            orderId,
             createdAt:
                 auditEvent.createdAt ||
                 serverTimestamp()
         }
     );
 
-
-    // =====================================================
-    // 4. COMMIT ATÔMICO
-    // =====================================================
-
     await batch.commit();
-
 
     const updatedCommission =
         await getCommission(
             commissionId
         );
-
 
     return {
         commission: updatedCommission,
@@ -389,8 +252,7 @@ export async function updateCommissionWithAudit(
         audit: {
             id: auditRef.id,
             ...auditEvent,
-            commissionId,
-            orderId
+            commissionId
         }
     };
 }

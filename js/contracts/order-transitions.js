@@ -1,8 +1,14 @@
 /**
  * Contrato de Transições Operacionais — Pedido V1
  *
- * Define quais mudanças de estado são permitidas.
- * Este arquivo não executa operações nem altera Firestore.
+ * Responsabilidade:
+ * - definir quais mudanças de estado são permitidas;
+ * - centralizar as regras de transição;
+ * - não executar operações;
+ * - não alterar Firestore;
+ * - não alterar pedidos.
+ *
+ * Este arquivo é a ÚNICA autoridade sobre transições.
  */
 
 import {
@@ -13,7 +19,12 @@ import {
 } from "./order-status.js";
 
 
+// =========================================================
+// TRANSIÇÕES DO PEDIDO
+// =========================================================
+
 const ALLOWED_ORDER_TRANSITIONS = Object.freeze({
+
     [ORDER_STATUS.PENDENTE]: [
         ORDER_STATUS.CONFIRMADO,
         ORDER_STATUS.CANCELADO
@@ -35,7 +46,12 @@ const ALLOWED_ORDER_TRANSITIONS = Object.freeze({
 });
 
 
+// =========================================================
+// TRANSIÇÕES DE PAGAMENTO
+// =========================================================
+
 const ALLOWED_PAYMENT_TRANSITIONS = Object.freeze({
+
     [PAYMENT_STATUS.PENDENTE]: [
         PAYMENT_STATUS.PAGO,
         PAYMENT_STATUS.RECUSADO,
@@ -53,7 +69,12 @@ const ALLOWED_PAYMENT_TRANSITIONS = Object.freeze({
 });
 
 
+// =========================================================
+// TRANSIÇÕES DE FULFILLMENT
+// =========================================================
+
 const ALLOWED_FULFILLMENT_TRANSITIONS = Object.freeze({
+
     [FULFILLMENT_STATUS.PENDENTE]: [
         FULFILLMENT_STATUS.PREPARANDO,
         FULFILLMENT_STATUS.CANCELADO
@@ -74,7 +95,12 @@ const ALLOWED_FULFILLMENT_TRANSITIONS = Object.freeze({
 });
 
 
+// =========================================================
+// TRANSIÇÕES DE COMISSÃO
+// =========================================================
+
 const ALLOWED_COMMISSION_TRANSITIONS = Object.freeze({
+
     [COMMISSION_STATUS.NAO_APLICAVEL]: [],
 
     [COMMISSION_STATUS.PENDENTE]: [
@@ -93,49 +119,103 @@ const ALLOWED_COMMISSION_TRANSITIONS = Object.freeze({
 });
 
 
-export function canTransitionOrderStatus(
+// =========================================================
+// FUNÇÃO INTERNA
+// =========================================================
+
+function canTransition(
+    transitionMap,
     fromStatus,
     toStatus
 ) {
+
+    if (!fromStatus || !toStatus) {
+        return false;
+    }
+
+    /*
+     * Repetir o mesmo estado é permitido.
+     *
+     * Isso torna a operação idempotente.
+     */
+    if (fromStatus === toStatus) {
+        return true;
+    }
+
     const allowed =
-        ALLOWED_ORDER_TRANSITIONS[fromStatus] || [];
+        transitionMap[fromStatus] || [];
 
     return allowed.includes(toStatus);
 }
 
+
+// =========================================================
+// PEDIDO
+// =========================================================
+
+export function canTransitionOrderStatus(
+    fromStatus,
+    toStatus
+) {
+    return canTransition(
+        ALLOWED_ORDER_TRANSITIONS,
+        fromStatus,
+        toStatus
+    );
+}
+
+
+// =========================================================
+// PAGAMENTO
+// =========================================================
 
 export function canTransitionPaymentStatus(
     fromStatus,
     toStatus
 ) {
-    const allowed =
-        ALLOWED_PAYMENT_TRANSITIONS[fromStatus] || [];
-
-    return allowed.includes(toStatus);
+    return canTransition(
+        ALLOWED_PAYMENT_TRANSITIONS,
+        fromStatus,
+        toStatus
+    );
 }
 
+
+// =========================================================
+// FULFILLMENT
+// =========================================================
 
 export function canTransitionFulfillmentStatus(
     fromStatus,
     toStatus
 ) {
-    const allowed =
-        ALLOWED_FULFILLMENT_TRANSITIONS[fromStatus] || [];
-
-    return allowed.includes(toStatus);
+    return canTransition(
+        ALLOWED_FULFILLMENT_TRANSITIONS,
+        fromStatus,
+        toStatus
+    );
 }
 
+
+// =========================================================
+// COMISSÃO
+// =========================================================
 
 export function canTransitionCommissionStatus(
     fromStatus,
     toStatus
 ) {
-    const allowed =
-        ALLOWED_COMMISSION_TRANSITIONS[fromStatus] || [];
-
-    return allowed.includes(toStatus);
+    return canTransition(
+        ALLOWED_COMMISSION_TRANSITIONS,
+        fromStatus,
+        toStatus
+    );
 }
 
+
+// =========================================================
+// EXPORTAÇÃO DAS TABELAS
+// =========================================================
 
 export {
     ALLOWED_ORDER_TRANSITIONS,
