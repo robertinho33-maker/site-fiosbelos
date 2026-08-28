@@ -35,6 +35,15 @@ import {
 import * as commissionRepository
     from "./repositories/commission-repository.js";
 
+import {
+    loadStockMap
+} from "./services/stock-service.js";
+
+import {
+    getProductImage,
+    getProductImageCandidates
+} from "./services/image-service.js";
+
 
 let products = [];
 let orders = [];
@@ -241,10 +250,6 @@ function injectAdminStyles() {
             border: 1px solid #eee;
             border-radius: 10px;
             padding: 4px;
-        }
-
-        .admin-image-url {
-            min-width: 250px;
         }
 
         .admin-status {
@@ -2396,167 +2401,148 @@ window.deleteCoupon = deleteCoupon;
 async function loadProducts() {
     try {
         const response =
-            await fetch("ecocsv - products1.csv");
+            await fetch("products.normalized.json", {
+                cache: "no-store"
+            });
 
         if (!response.ok) {
             throw new Error(
-                "Erro ao carregar ecocsv - products1.csv"
+                `Erro ao carregar products.normalized.json (${response.status})`
             );
         }
 
-        const csvText = await response.text();
+        const data = await response.json();
 
-        products = parseCSV(csvText);
+        if (!Array.isArray(data)) {
+            throw new Error(
+                "products.normalized.json não contém um array de produtos."
+            );
+        }
+
+        /*
+         * O catálogo e o estoque são fontes diferentes.
+         *
+         * Catálogo:
+         *   products.normalized.json
+         *
+         * Estoque:
+         *   Firestore / inventory/{sku}
+         */
+        const stockMap = await loadStockMap();
+
+        console.log("===== STOCK RUNTIME TEST =====");
+        console.log("Stock Map:", stockMap);
+        console.log("Stock Map size:", stockMap.size);
+
+        products = data
+            .filter(
+                product =>
+                    product &&
+                    typeof product === "object"
+            )
+            .map(product => ({
+                id:
+                    String(
+                        product.id ||
+                        product.sku ||
+                        ""
+                    ).trim(),
+
+                sku:
+                    String(
+                        product.sku ||
+                        ""
+                    ).trim(),
+
+                name:
+                    String(
+                        product.name ||
+                        ""
+                    ).trim(),
+
+                weight:
+                    String(
+                        product.weight ||
+                        ""
+                    ).trim(),
+
+                price:
+                    Number.isFinite(
+                        Number(product.price)
+                    )
+                        ? Number(product.price)
+                        : 0,
+
+                category:
+                    String(
+                        product.category ||
+                        "Geral"
+                    ).trim(),
+
+                /*
+                 * Estoque operacional vem do Firestore.
+                 *
+                 * Se ainda não houver registro para o SKU,
+                 * permanece UNKNOWN sem inventar quantidade.
+                 */
+                stockStatus:
+                    stockMap.get(
+                        String(product.sku || "").trim()
+                    )?.status || "unknown",
+
+                stockQuantity:
+                    stockMap.get(
+                        String(product.sku || "").trim()
+                    )?.quantity ?? null,
+
+                description:
+                    String(
+                        product.description ||
+                        ""
+                    ).trim(),
+
+            }))
+            .filter(
+                product =>
+                    product.sku &&
+                    product.name
+            );
+
+        console.log(
+            `✅ ${products.length} produtos carregados de products.normalized.json`
+        );
+
+        console.log(
+            `📦 ${stockMap.size} registros de estoque carregados do Firestore`
+        );
 
         createProductInterface();
         renderProductsTable();
 
     } catch (error) {
         console.error(
-            "Erro ao carregar produtos:",
+            "Erro ao carregar catálogo normalizado:",
             error
         );
 
         const tbody =
-            document.getElementById("admin-products-list");
+            document.getElementById(
+                "admin-products-list"
+            );
 
         if (tbody) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="10" class="admin-empty admin-danger-text">
+                    <td
+                        colspan="7"
+                        class="text-center py-4 text-danger"
+                    >
                         Erro ao carregar catálogo.
-                        <br>
-                        <small>
-                            ${escapeHTML(error.message)}
-                        </small>
                     </td>
                 </tr>
             `;
         }
     }
-}
-
-function parseCSV(text) {
-    const rows = [];
-    let row = [];
-    let field = "";
-    let insideQuotes = false;
-
-    for (let i = 0; i < text.length; i++) {
-        const char = text[i];
-        const next = text[i + 1];
-
-        if (char === '"' && insideQuotes && next === '"') {
-            field += '"';
-            i++;
-            continue;
-        }
-
-        if (char === '"') {
-            insideQuotes = !insideQuotes;
-            continue;
-        }
-
-        if (char === "," && !insideQuotes) {
-            row.push(field.trim());
-            field = "";
-            continue;
-        }
-
-        if (
-            (char === "\n" || char === "\r") &&
-            !insideQuotes
-        ) {
-            if (char === "\r" && next === "\n") {
-                i++;
-            }
-
-            row.push(field.trim());
-            field = "";
-
-            if (row.some(value => value !== "")) {
-                rows.push(row);
-            }
-
-            row = [];
-            continue;
-        }
-
-        field += char;
-    }
-
-    if (field || row.length) {
-        row.push(field.trim());
-        rows.push(row);
-    }
-
-    if (rows.length < 2) return [];
-
-    const headers = rows[0].map(
-        header => header.trim()
-    );
-
-    const indexOf = (...names) => {
-        for (const name of names) {
-            const index = headers.findIndex(
-                header =>
-                    normalize(header) ===
-                    normalize(name)
-            );
-
-            if (index >= 0) return index;
-        }
-
-        return -1;
-    };
-
-    const get = (values, ...names) => {
-        const index = indexOf(...names);
-
-        return index >= 0
-            ? values[index] || ""
-            : "";
-    };
-
-    return rows.slice(1).map((values, index) => ({
-        id: index,
-
-        SKU:
-            get(values, "SKU") ||
-            `SKU-${index + 1}`,
-
-        Produto:
-            get(values, "Produto") ||
-            "Sem nome",
-
-        Peso:
-            get(values, "Peso", "peso"),
-
-        Preço:
-            get(values, "Preço", "Preco") ||
-            "0",
-
-        Categoria:
-            get(values, "Categoria") ||
-            "Geral",
-
-        Estoque:
-            get(values, "Estoque") ||
-            "0",
-
-        Descrição:
-            get(values, "Descrição", "Descricao"),
-
-        Imagem:
-            get(
-                values,
-                "Imagem",
-                "URL",
-                "URL da imagem",
-                "link_foto_principal",
-                "Link Foto Principal"
-            )
-    }));
 }
 
 function createProductInterface() {
@@ -2609,7 +2595,6 @@ function createProductInterface() {
                 <th>Produto</th>
                 <th>Preço</th>
                 <th>Estoque</th>
-                <th>URL da imagem</th>
                 <th>Ações</th>
             `;
         }
@@ -2623,31 +2608,39 @@ function renderProductsTable() {
     if (!tbody) return;
 
     const search = normalize(
-        document.getElementById("products-search")?.value
+        document.getElementById("products-search")?.value || ""
     );
 
     const stockFilter =
-        document.getElementById("products-stock-filter")?.value ||
-        "";
+        document.getElementById("products-stock-filter")?.value || "";
 
     const filtered = products.filter(product => {
         const text = normalize(`
-            ${product.SKU}
-            ${product.Produto}
-            ${product.Categoria}
+            ${product.sku}
+            ${product.name}
+            ${product.category}
         `);
 
         if (search && !text.includes(search)) {
             return false;
         }
 
-        const stock = Number(product.Estoque || 0);
+        const stock = Number(product.stockQuantity);
 
-        if (stockFilter === "available" && stock <= 0) {
+        const available =
+            product.stockStatus === "in_stock" &&
+            Number.isFinite(stock) &&
+            stock > 0;
+
+        const zero =
+            product.stockStatus === "out_of_stock" ||
+            (Number.isFinite(stock) && stock <= 0);
+
+        if (stockFilter === "available" && !available) {
             return false;
         }
 
-        if (stockFilter === "zero" && stock > 0) {
+        if (stockFilter === "zero" && !zero) {
             return false;
         }
 
@@ -2655,16 +2648,32 @@ function renderProductsTable() {
     });
 
     const stockTotal = filtered.reduce(
-        (sum, product) =>
-            sum + Number(product.Estoque || 0),
+        (sum, product) => {
+            const quantity = Number(product.stockQuantity);
+
+            return sum +
+                (Number.isFinite(quantity) && quantity > 0
+                    ? quantity
+                    : 0);
+        },
         0
     );
 
     const catalogValue = filtered.reduce(
-        (sum, product) =>
-            sum +
-            normalizePrice(product.Preço) *
-                Number(product.Estoque || 0),
+        (sum, product) => {
+            const quantity = Number(product.stockQuantity);
+            const price = Number(product.price);
+
+            if (
+                !Number.isFinite(quantity) ||
+                quantity <= 0 ||
+                !Number.isFinite(price)
+            ) {
+                return sum;
+            }
+
+            return sum + price * quantity;
+        },
         0
     );
 
@@ -2679,10 +2688,15 @@ function renderProductsTable() {
         },
         {
             label: "Sem estoque",
-            value: filtered.filter(
-                product =>
-                    Number(product.Estoque || 0) <= 0
-            ).length
+            value: filtered.filter(product => {
+                const quantity = Number(product.stockQuantity);
+
+                return (
+                    product.stockStatus === "out_of_stock" ||
+                    !Number.isFinite(quantity) ||
+                    quantity <= 0
+                );
+            }).length
         },
         {
             label: "Valor do estoque",
@@ -2698,6 +2712,7 @@ function renderProductsTable() {
                 </td>
             </tr>
         `;
+
         return;
     }
 
@@ -2708,8 +2723,17 @@ function renderProductsTable() {
             );
 
         const image =
-            product.Imagem ||
-            "img/products/default.jpg";
+            getProductImage(product.sku);
+
+        const stockQuantity =
+            Number.isFinite(Number(product.stockQuantity))
+                ? Number(product.stockQuantity)
+                : 0;
+
+        const price =
+            Number.isFinite(Number(product.price))
+                ? Number(product.price)
+                : 0;
 
         return `
             <tr>
@@ -2718,41 +2742,39 @@ function renderProductsTable() {
                     <img
                         src="${escapeHTML(image)}"
                         class="admin-thumb"
-                        alt="${escapeHTML(product.Produto)}"
-                        onerror="
-                            this.onerror=null;
-                            this.src='img/products/default.jpg';
-                        "
+                        alt="${escapeHTML(product.name)}"
                     >
                 </td>
 
                 <td>
                     <strong>
-                        ${escapeHTML(product.SKU)}
+                        ${escapeHTML(product.sku)}
                     </strong>
                 </td>
 
                 <td>
                     <strong>
-                        ${escapeHTML(product.Produto)}
+                        ${escapeHTML(product.name)}
                     </strong>
 
                     <br>
 
                     <small class="text-muted">
-                        ${escapeHTML(product.Categoria)}
+                        ${escapeHTML(product.category)}
                     </small>
                 </td>
 
                 <td>
                     <input
-                        type="text"
+                        type="number"
+                        min="0"
+                        step="0.01"
                         class="form-control form-control-sm"
-                        value="${escapeHTML(product.Preço)}"
+                        value="${price}"
                         onchange="
                             updateProductField(
                                 ${originalIndex},
-                                'Preço',
+                                'price',
                                 this.value
                             )
                         "
@@ -2763,28 +2785,13 @@ function renderProductsTable() {
                     <input
                         type="number"
                         min="0"
+                        step="1"
                         class="form-control form-control-sm"
-                        value="${Number(product.Estoque || 0)}"
+                        value="${stockQuantity}"
                         onchange="
                             updateProductField(
                                 ${originalIndex},
-                                'Estoque',
-                                this.value
-                            )
-                        "
-                    >
-                </td>
-
-                <td>
-                    <input
-                        type="url"
-                        class="form-control form-control-sm admin-image-url"
-                        value="${escapeHTML(product.Imagem || "")}"
-                        placeholder="https://..."
-                        onchange="
-                            updateProductField(
-                                ${originalIndex},
-                                'Imagem',
+                                'stockQuantity',
                                 this.value
                             )
                         "
@@ -2793,24 +2800,6 @@ function renderProductsTable() {
 
                 <td>
                     <div class="admin-actions">
-
-                        <button
-                            class="btn btn-sm btn-outline-success"
-                            onclick="
-                                updateProductField(
-                                    ${originalIndex},
-                                    'Imagem',
-                                    prompt(
-                                        'URL da imagem:',
-                                        '${escapeHTML(product.Imagem || "")}'
-                                    ) || ''
-                                );
-                                renderProductsTable();
-                            "
-                            title="Alterar URL"
-                        >
-                            <i class="fa-solid fa-image"></i>
-                        </button>
 
                         <button
                             class="btn btn-sm btn-outline-danger"
@@ -2829,21 +2818,57 @@ function renderProductsTable() {
 }
 
 function updateProductField(index, field, value) {
-    if (!products[index]) return;
+    const product = products[index];
 
-    products[index][field] = value;
+    if (!product) return;
 
-    if (field === "Imagem") {
-        renderProductsTable();
+    switch (field) {
+        case "price": {
+            const price = Number(value);
+
+            product.price =
+                Number.isFinite(price) && price >= 0
+                    ? price
+                    : 0;
+
+            break;
+        }
+
+        case "stockQuantity": {
+            const quantity = Number(value);
+
+            product.stockQuantity =
+                Number.isInteger(quantity) && quantity >= 0
+                    ? quantity
+                    : 0;
+
+            product.stockStatus =
+                product.stockQuantity > 0
+                    ? "in_stock"
+                    : "out_of_stock";
+
+            break;
+        }
+
+        default:
+            console.warn(
+                `Campo de produto não permitido: ${field}`
+            );
+
+            return;
     }
+
+    renderProductsTable();
 }
 
 function deleteProduct(index) {
-    if (!products[index]) return;
+    const product = products[index];
+
+    if (!product) return;
 
     if (
         !confirm(
-            `Remover "${products[index].Produto}" do catálogo carregado?`
+            `Remover "${product.name}" do catálogo carregado?`
         )
     ) {
         return;
@@ -2857,51 +2882,80 @@ function deleteProduct(index) {
 function saveProduct(event) {
     event.preventDefault();
 
+    const sku =
+        document.getElementById("prod-sku")?.value.trim() ||
+        `SKU-${products.length + 1}`;
+
+    const name =
+        document.getElementById("prod-name")?.value.trim() ||
+        "Sem nome";
+
+    const weight =
+        document.getElementById("prod-weight")?.value.trim() ||
+        "";
+
+    const priceValue =
+        Number(
+            document.getElementById("prod-price")?.value
+        );
+
+    const stockValue =
+        Number(
+            document.getElementById("prod-stock")?.value
+        );
+
+    const category =
+        document.getElementById("prod-category")?.value.trim() ||
+        "Geral";
+
+    const description =
+        document.getElementById("prod-desc")?.value.trim() ||
+        "";
+
+    const image =
+        document.getElementById("prod-image")?.value.trim() ||
+        "";
+
+    const price =
+        Number.isFinite(priceValue) && priceValue >= 0
+            ? priceValue
+            : 0;
+
+    const stockQuantity =
+        Number.isInteger(stockValue) && stockValue >= 0
+            ? stockValue
+            : 0;
+
     const product = {
-        id: products.length,
+        id: sku,
 
-        SKU:
-            document.getElementById("prod-sku")?.value.trim() ||
-            `SKU-${products.length + 1}`,
+        sku,
+        name,
+        weight,
+        price,
+        category,
 
-        Produto:
-            document.getElementById("prod-name")?.value.trim() ||
-            "Sem nome",
+        stockStatus:
+            stockQuantity > 0
+                ? "in_stock"
+                : "out_of_stock",
 
-        Peso:
-            document.getElementById("prod-weight")?.value.trim() ||
-            "",
+        stockQuantity,
 
-        Preço:
-            document.getElementById("prod-price")?.value.trim() ||
-            "0",
-
-        Categoria:
-            document.getElementById("prod-category")?.value.trim() ||
-            "Geral",
-
-        Estoque:
-            document.getElementById("prod-stock")?.value.trim() ||
-            "0",
-
-        Descrição:
-            document.getElementById("prod-desc")?.value.trim() ||
-            "",
-
-        Imagem:
-            document.getElementById("prod-image")?.value.trim() ||
-            ""
+        description,
+        image
     };
 
     products.push(product);
 
     renderProductsTable();
 
-    document.getElementById("form-product")?.reset();
+    document
+        .getElementById("form-product")
+        ?.reset();
 
     alert(
-        "Produto adicionado ao catálogo em memória. " +
-        "Use Exportar CSV para salvar as alterações."
+        "Produto adicionado ao catálogo em memória."
     );
 }
 
@@ -2911,25 +2965,38 @@ function exportCSV() {
         return;
     }
 
-    const headers = [
-        "Produto",
-        "peso",
-        "Preço",
-        "Categoria",
-        "Estoque",
-        "Descrição",
-        "SKU",
-        "Imagem"
+    /*
+     * O estado interno usa exclusivamente o contrato normalizado.
+     *
+     * A exportação mantém o formato CSV externo
+     * para compatibilidade com planilhas existentes.
+     */
+
+    const columns = [
+        ["Produto", "name"],
+        ["peso", "weight"],
+        ["Preço", "price"],
+        ["Categoria", "category"],
+        ["Estoque", "stockQuantity"],
+        ["Descrição", "description"],
+        ["SKU", "sku"],
+        ["Imagem", "image"]
     ];
 
+    const escapeCSV = value =>
+        `"${String(value ?? "").replace(/"/g, '""')}"`;
+
     const rows = [
-        headers.join(","),
+        columns
+            .map(([header]) =>
+                escapeCSV(header)
+            )
+            .join(","),
+
         ...products.map(product =>
-            headers
-                .map(header =>
-                    `"${String(
-                        product[header] ?? ""
-                    ).replace(/"/g, '""')}"`
+            columns
+                .map(([, field]) =>
+                    escapeCSV(product[field])
                 )
                 .join(",")
         )
@@ -2949,6 +3016,7 @@ function exportCSV() {
         document.createElement("a");
 
     link.href = url;
+
     link.download =
         "ecocsv - products1-atualizado.csv";
 
