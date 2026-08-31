@@ -26,51 +26,150 @@
 </body>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+    import {
+        auth,
+        db,
+        signInWithPopup,
+        googleProvider,
+        onAuthStateChanged
+    } from "./js/firebase-config.js";
 
-  const firebaseConfig = {
-  apiKey: "AIzaSyAAWrKX6Vu3DJRmmMrTreR1iwUw_ytUnXg",
-  authDomain: "base-total.firebaseapp.com",
-  projectId: "base-total",
-  storageBucket: "base-total.firebasestorage.app",
-  messagingSenderId: "1052334488431",
-  appId: "1:1052334488431:web:c8d2071a18bdb6f82e469a",
-  measurementId: "G-TWSEGNXFXJ"
-};
+    import {
+        signInWithEmailAndPassword,
+        createUserWithEmailAndPassword,
+        updateProfile,
+        signOut
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
+    import {
+        doc,
+        getDoc,
+        setDoc,
+        serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  const emailInput = document.getElementById("username");
-  const passwordInput = document.getElementById("password");
+    import { redirectByRole } from "./js/auth-guard.js";
 
-  // Login
-  document.getElementById("loginBtn").addEventListener("click", async (e) => {
-    e.preventDefault();
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-      const token = await userCredential.user.getIdToken();
-      await fetch("http://127.0.0.1:5500/home.html", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token })
-      });
-      alert("Login realizado com sucesso!");
-    } catch (error) {
-      alert("Erro ao fazer login: " + error.message);
+    const form = document.querySelector(".login-form" );
+    const emailInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+    const loginButton = document.getElementById("loginBtn");
+    const registerButton = document.getElementById("registerBtn");
+
+    function setBusy(isBusy) {
+        [loginButton, registerButton].forEach((button) => {
+            if (button) button.disabled = isBusy;
+        });
     }
-  });
 
-  // Registro
-  document.getElementById("registerBtn").addEventListener("click", async (e) => {
-    e.preventDefault();
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-      alert("Conta criada com sucesso para " + userCredential.user.email);
-    } catch (error) {
-      alert("Erro ao criar conta: " + error.message);
+    function showError(error) {
+        const messages = {
+            "auth/invalid-credential": "E-mail ou senha inválidos.",
+            "auth/user-not-found": "Conta não encontrada. Use Criar Conta apenas se ainda não tiver cadastro.",
+            "auth/wrong-password": "E-mail ou senha inválidos.",
+            "auth/email-already-in-use": "Este e-mail já possui cadastro. Faça login em vez de criar outra conta.",
+            "auth/weak-password": "A senha deve ter pelo menos 6 caracteres.",
+            "auth/invalid-email": "Informe um e-mail válido.",
+            "auth/popup-closed-by-user": "A janela de login foi fechada."
+        };
+
+        alert(messages[error.code] || "Não foi possível concluir a autenticação. Tente novamente.");
     }
-  });
+
+    async function ensureClientProfile(user) {
+        const profileRef = doc(db, "userProfiles", user.uid);
+        const profileSnapshot = await getDoc(profileRef);
+
+        if (!profileSnapshot.exists()) {
+            await setDoc(profileRef, {
+                uid: user.uid,
+                email: user.email || "",
+                displayName: user.displayName || "",
+                role: "client",
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            return;
+        }
+
+        const currentRole = profileSnapshot.data().role;
+
+        if (!currentRole) {
+            await setDoc(profileRef, {
+                role: "client",
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+        }
+    }
+
+    async function finishAuthentication(user) {
+        await ensureClientProfile(user);
+        await redirectByRole(user);
+    }
+
+    loginButton.addEventListener("click", async (event) => {
+        event.preventDefault();
+        setBusy(true);
+
+        try {
+            const credentials = await signInWithEmailAndPassword(
+                auth,
+                emailInput.value.trim(),
+                passwordInput.value
+            );
+            await finishAuthentication(credentials.user);
+        } catch (error) {
+            showError(error);
+        } finally {
+            setBusy(false);
+        }
+    });
+
+    registerButton.addEventListener("click", async (event) => {
+        event.preventDefault();
+        setBusy(true);
+
+        try {
+            const credentials = await createUserWithEmailAndPassword(
+                auth,
+                emailInput.value.trim(),
+                passwordInput.value
+            );
+
+            await updateProfile(credentials.user, {
+                displayName: emailInput.value.trim().split("@")[0]
+            });
+
+            await ensureClientProfile(credentials.user);
+            alert("Conta de cliente criada com sucesso.");
+            await finishAuthentication(credentials.user);
+        } catch (error) {
+            showError(error);
+        } finally {
+            setBusy(false);
+        }
+    });
+
+    form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        loginButton.click();
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) return;
+
+        try {
+            await finishAuthentication(user);
+        } catch (error) {
+            console.error("Falha ao restaurar sessão:", error);
+            await signOut(auth);
+        }
+    });
+
+    window.addEventListener("pageshow", () => {
+        if (auth.currentUser) {
+            finishAuthentication(auth.currentUser).catch(console.error);
+        }
+    });
 </script>
 </html>

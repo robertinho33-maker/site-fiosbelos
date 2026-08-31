@@ -1,0 +1,348 @@
+﻿========================================
+OPERAÇÃO: collection\(
+========================================
+C:\Users\sou_r\site-fiosbelos\js\repositories\audit-repository.js:27
+  collection(db, AUDIT_COLLECTION),
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\commission-repository.js:73
+  collection(db, COMMISSIONS_COLLECTION)
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\commission-repository.js:77
+  collection(db, AUDIT_COLLECTION)
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\commission-repository.js:323
+  collection(db, AUDIT_COLLECTION)
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:35
+  collection(db, ORDERS_COLLECTION),
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:66
+  collection(db, ORDERS_COLLECTION)
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:70
+  collection(db, AUDIT_COLLECTION)
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:182
+  collection(db, AUDIT_COLLECTION)
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\stock-repository.js:59
+  collection(
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:465
+  const snapshot = await getDocs(collection(db, "orders"));
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:1170
+  const snapshot = await getDocs(collection(db, "customers"));
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:1484
+  collection(db, "commissions")
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:1929
+  collection(db, "coupons")
+
+C:\Users\sou_r\site-fiosbelos\js\index.js:77
+  db.collection("userProfiles").doc(uid).set(profileData, { merge: true })
+
+C:\Users\sou_r\site-fiosbelos\js\index.js:96
+  .collection("userProfiles")
+
+C:\Users\sou_r\site-fiosbelos\js\script.js:15
+  const colAg = collection(db, "agendamentos");
+
+C:\Users\sou_r\site-fiosbelos\js\script.js:16
+  const colClientes = collection(db, "clientes");
+
+C:\Users\sou_r\site-fiosbelos\functions\index.js:118
+  .collection("userProfiles")
+
+C:\Users\sou_r\site-fiosbelos\functions\index.js:138
+  .collection("userProfiles")
+
+========================================
+OPERAÇÃO: doc\(
+========================================
+C:\Users\sou_r\site-fiosbelos\js\repositories\audit-repository.js:26
+  const auditRef = await addDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\commission-repository.js:72
+  const commissionRef = doc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\commission-repository.js:76
+  const auditRef = doc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\commission-repository.js:80
+  const orderRef = doc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\commission-repository.js:183
+  const commissionRef = doc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\commission-repository.js:189
+  const snapshot = await getDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\commission-repository.js:230
+  const commissionRef = doc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\commission-repository.js:236
+  await updateDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\commission-repository.js:310
+  const commissionRef = doc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\commission-repository.js:316
+  const orderRef = doc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\commission-repository.js:322
+  const auditRef = doc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:34
+  const orderRef = await addDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:65
+  const orderRef = doc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:69
+  const auditRef = doc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:107
+  const orderRef = doc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:113
+  const snapshot = await getDoc(orderRef);
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:137
+  const orderRef = doc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:143
+  await updateDoc(orderRef, {
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:175
+  const orderRef = doc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:181
+  const auditRef = doc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\stock-repository.js:37
+  doc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\stock-repository.js:44
+  await getDoc(reference);
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\stock-repository.js:96
+  doc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\stock-repository.js:102
+  await setDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\stock-repository.js:128
+  doc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\stock-repository.js:134
+  await deleteDoc(reference);
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:1905
+  await setDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:1906
+  doc(db, "coupons", id),
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:2315
+  await setDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:2316
+  doc(db, "coupons", newId),
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:2323
+  await deleteDoc(doc(db, "coupons", oldId));
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:2325
+  await updateDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:2326
+  doc(db, "coupons", oldId),
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:2346
+  await updateDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:2347
+  doc(db, "coupons", id),
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:2378
+  await deleteDoc(doc(db, "coupons", id));
+
+C:\Users\sou_r\site-fiosbelos\js\auth-guard.js:42
+  const profileSnapshot = await getDoc(doc(db, "userProfiles", user.uid));
+
+C:\Users\sou_r\site-fiosbelos\js\cart.js:870
+  let couponRef = doc(
+
+C:\Users\sou_r\site-fiosbelos\js\cart.js:876
+  let couponSnap = await getDoc(couponRef);
+
+C:\Users\sou_r\site-fiosbelos\js\cart.js:879
+  couponRef = doc(
+
+C:\Users\sou_r\site-fiosbelos\js\cart.js:885
+  couponSnap = await getDoc(couponRef);
+
+C:\Users\sou_r\site-fiosbelos\js\cart.js:1170
+  const counterRef = doc(db, "counters", "orders");
+
+C:\Users\sou_r\site-fiosbelos\js\cart.js:1431
+  const customerRef = doc(db, "customers", customerId);
+
+C:\Users\sou_r\site-fiosbelos\js\cart.js:1432
+  const existingCustomer = await getDoc(customerRef);
+
+C:\Users\sou_r\site-fiosbelos\js\cart.js:1435
+  await setDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\cart.js:1446
+  await setDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\index.js:77
+  db.collection("userProfiles").doc(uid).set(profileData, { merge: true })
+
+C:\Users\sou_r\site-fiosbelos\js\index.js:97
+  .doc(context.auth.uid)
+
+C:\Users\sou_r\site-fiosbelos\js\script.js:67
+  id ? await updateDoc(doc(db, "agendamentos", id), dados) : await addDoc(colAg, dados);
+
+C:\Users\sou_r\site-fiosbelos\functions\index.js:119
+  .doc(uid)
+
+C:\Users\sou_r\site-fiosbelos\functions\index.js:139
+  .doc(context.auth.uid)
+
+========================================
+OPERAÇÃO: addDoc\(
+========================================
+C:\Users\sou_r\site-fiosbelos\js\repositories\audit-repository.js:26
+  const auditRef = await addDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:34
+  const orderRef = await addDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\script.js:67
+  id ? await updateDoc(doc(db, "agendamentos", id), dados) : await addDoc(colAg, dados);
+
+========================================
+OPERAÇÃO: setDoc\(
+========================================
+C:\Users\sou_r\site-fiosbelos\js\repositories\stock-repository.js:102
+  await setDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:1905
+  await setDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:2315
+  await setDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\cart.js:1435
+  await setDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\cart.js:1446
+  await setDoc(
+
+========================================
+OPERAÇÃO: updateDoc\(
+========================================
+C:\Users\sou_r\site-fiosbelos\js\repositories\commission-repository.js:236
+  await updateDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:143
+  await updateDoc(orderRef, {
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:2325
+  await updateDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:2346
+  await updateDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\script.js:67
+  id ? await updateDoc(doc(db, "agendamentos", id), dados) : await addDoc(colAg, dados);
+
+========================================
+OPERAÇÃO: deleteDoc\(
+========================================
+C:\Users\sou_r\site-fiosbelos\js\repositories\stock-repository.js:134
+  await deleteDoc(reference);
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:2323
+  await deleteDoc(doc(db, "coupons", oldId));
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:2378
+  await deleteDoc(doc(db, "coupons", id));
+
+========================================
+OPERAÇÃO: getDoc\(
+========================================
+C:\Users\sou_r\site-fiosbelos\js\repositories\commission-repository.js:189
+  const snapshot = await getDoc(
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:113
+  const snapshot = await getDoc(orderRef);
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\stock-repository.js:44
+  await getDoc(reference);
+
+C:\Users\sou_r\site-fiosbelos\js\auth-guard.js:42
+  const profileSnapshot = await getDoc(doc(db, "userProfiles", user.uid));
+
+C:\Users\sou_r\site-fiosbelos\js\cart.js:876
+  let couponSnap = await getDoc(couponRef);
+
+C:\Users\sou_r\site-fiosbelos\js\cart.js:885
+  couponSnap = await getDoc(couponRef);
+
+C:\Users\sou_r\site-fiosbelos\js\cart.js:1432
+  const existingCustomer = await getDoc(customerRef);
+
+========================================
+OPERAÇÃO: getDocs\(
+========================================
+C:\Users\sou_r\site-fiosbelos\js\repositories\stock-repository.js:65
+  await getDocs(reference);
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:465
+  const snapshot = await getDocs(collection(db, "orders"));
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:1170
+  const snapshot = await getDocs(collection(db, "customers"));
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:1483
+  const snapshot = await getDocs(
+
+C:\Users\sou_r\site-fiosbelos\js\admin.js:1928
+  const snapshot = await getDocs(
+
+========================================
+OPERAÇÃO: onSnapshot\(
+========================================
+C:\Users\sou_r\site-fiosbelos\js\script.js:72
+  onSnapshot(colAg, (snap) => {
+
+C:\Users\sou_r\site-fiosbelos\js\script.js:79
+  onSnapshot(colClientes, (snap) => {
+
+========================================
+OPERAÇÃO: runTransaction\(
+========================================
+C:\Users\sou_r\site-fiosbelos\js\cart.js:1172
+  const sequence = await runTransaction(db, async transaction => {
+
+========================================
+OPERAÇÃO: writeBatch\(
+========================================
+C:\Users\sou_r\site-fiosbelos\js\repositories\commission-repository.js:86
+  const batch = writeBatch(db);
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\commission-repository.js:327
+  const batch = writeBatch(db);
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:73
+  const batch = writeBatch(db);
+
+C:\Users\sou_r\site-fiosbelos\js\repositories\order-repository.js:185
+  const batch = writeBatch(db);
+

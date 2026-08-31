@@ -20,7 +20,7 @@
         .filter-bar { background-color: #f7fafc; padding: 1rem; border-radius: 8px; margin-bottom: 1.25rem; border: 1px solid #e2e8f0; }
     </style>
 </head>
-<body>
+<body class="d-none" data-required-role="master">
 
     <aside class="sidebar">
         <div class="sidebar-brand"><i class="fa-solid fa-crown"></i> <span>Fios Perfeitos</span></div>
@@ -244,8 +244,15 @@
 
         </div>
     </main>
-
+        
     <script src="js/vendor/bootstrap.bundle.min.js"></script>
     <script type="module" src="js/admin.js?v=20260825"></script>
+    <script type="module">
+        import { requireRole } from "./js/auth-guard.js";
+
+        requireRole("master").catch((error) => {
+        console.error("Falha ao proteger o painel administrativo:", error);
+    });
+    </script>
 </body>
 </html>

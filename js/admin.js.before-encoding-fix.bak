@@ -324,7 +324,7 @@ function injectAdminStyles() {
 }
 
 /* =========================================================
-   UTILITÁRIOS DE UI
+   UTILITÃRIOS DE UI
 ========================================================= */
 
 function findTableContainer(tbodyId) {
@@ -508,7 +508,7 @@ async function loadOrders() {
                     <span>${escapeHTML(message)}</span>
                     <br><br>
                     <small>
-                        A leitura da coleção "orders" falhou ou algum
+                        A leitura da coleÃ§Ã£o "orders" falhou ou algum
                         processamento do pedido apresentou erro.
                     </small>
                 </td>
@@ -540,7 +540,7 @@ function createOrderInterface() {
                 <option value="Pendente">Pendente</option>
                 <option value="Confirmado">Confirmado</option>
                 <option value="Em processamento">Em processamento</option>
-                <option value="Concluido">Concluído</option>
+                <option value="Concluido">ConcluÃ­do</option>
                 <option value="Cancelado">Cancelado</option>
             </select>
 
@@ -588,7 +588,7 @@ function createOrderInterface() {
                 <th>Cupom</th>
                 <th>Integridade</th>
                 <th>Status</th>
-                <th>Ações</th>
+                <th>AÃ§Ãµes</th>
             `;
         }
     }
@@ -682,7 +682,7 @@ function renderOrders() {
             value: money(paid)
         },
         {
-            label: "Ticket médio",
+            label: "Ticket mÃ©dio",
             value: money(filtered.length ? total / filtered.length : 0)
         }
     ]);
@@ -716,7 +716,7 @@ function renderOrders() {
                     <strong>${escapeHTML(customer.name || "Cliente")}</strong>
                     <br>
                     <small class="text-muted">
-                        ${escapeHTML(customer.phone || "Telefone não informado")}
+                        ${escapeHTML(customer.phone || "Telefone nÃ£o informado")}
                     </small>
                 </td>
 
@@ -731,10 +731,10 @@ function renderOrders() {
             ? `
                 <span
                     class="badge bg-success"
-                    title="Dados financeiros íntegros"
+                    title="Dados financeiros Ã­ntegros"
                 >
                     <i class="fa-solid fa-check me-1"></i>
-                    Íntegro
+                    Ãntegro
                 </span>
               `
             : `
@@ -806,7 +806,7 @@ async function updateOrderStatus(orderId, newStatus) {
         );
 
         if (!order) {
-            throw new Error("Pedido não encontrado.");
+            throw new Error("Pedido nÃ£o encontrado.");
         }
 
         const result = await changeOrderStatus({
@@ -814,7 +814,7 @@ async function updateOrderStatus(orderId, newStatus) {
             nextStatus: newStatus,
             actorId: null,
             actorName: "Painel Administrativo",
-            reason: "Alteração de status realizada pelo painel.",
+            reason: "AlteraÃ§Ã£o de status realizada pelo painel.",
             repository: orderRepository
         });
 
@@ -843,7 +843,7 @@ async function updateOrderStatus(orderId, newStatus) {
 
         alert(
             error?.message ||
-            "Não foi possível atualizar o status do pedido."
+            "NÃ£o foi possÃ­vel atualizar o status do pedido."
         );
 
         renderOrders();
@@ -857,7 +857,7 @@ async function handlePaymentStatus(orderId, newStatus) {
         );
 
         if (!order) {
-            throw new Error("Pedido não encontrado.");
+            throw new Error("Pedido nÃ£o encontrado.");
         }
 
         const result = await changeOrderPaymentStatus({
@@ -865,7 +865,7 @@ async function handlePaymentStatus(orderId, newStatus) {
             nextStatus: newStatus,
             actorId: null,
             actorName: "Painel Administrativo",
-            reason: "Alteração de pagamento realizada pelo painel.",
+            reason: "AlteraÃ§Ã£o de pagamento realizada pelo painel.",
             repository: orderRepository
         });
 
@@ -898,7 +898,7 @@ async function handlePaymentStatus(orderId, newStatus) {
 
         alert(
             error?.message ||
-            "Não foi possível atualizar o pagamento."
+            "NÃ£o foi possÃ­vel atualizar o pagamento."
         );
 
         renderOrders();
@@ -913,7 +913,7 @@ async function handleFulfillmentStatus(orderId, newStatus) {
         );
 
         if (!order) {
-            throw new Error("Pedido não encontrado.");
+            throw new Error("Pedido nÃ£o encontrado.");
         }
 
         const result = await changeOrderFulfillmentStatus({
@@ -921,7 +921,7 @@ async function handleFulfillmentStatus(orderId, newStatus) {
             nextStatus: newStatus,
             actorId: null,
             actorName: "Painel Administrativo",
-            reason: "Alteração de fulfillment realizada pelo painel.",
+            reason: "AlteraÃ§Ã£o de fulfillment realizada pelo painel.",
             repository: orderRepository
         });
 
@@ -954,7 +954,7 @@ async function handleFulfillmentStatus(orderId, newStatus) {
 
         alert(
             error?.message ||
-            "Não foi possível atualizar o fulfillment."
+            "NÃ£o foi possÃ­vel atualizar o fulfillment."
         );
 
         renderOrders();
@@ -1079,7 +1079,7 @@ function viewOrder(orderId) {
                                     <div class="list-group-item d-flex justify-content-between">
                                         <span>
                                             ${escapeHTML(item.name || "Produto")}
-                                            × ${Number(item.quantity || 1)}
+                                            Ã— ${Number(item.quantity || 1)}
                                         </span>
                                         <strong>
                                             ${money(item.total || (item.price * item.quantity))}
@@ -1122,7 +1122,7 @@ function viewOrder(orderId) {
                 <div class="col-md-4">
                     <small class="text-muted">Pagamento</small>
                     <div class="form-control bg-light">
-                        ${escapeHTML(order.paymentStatus || "Não informado")}
+                        ${escapeHTML(order.paymentStatus || "NÃ£o informado")}
                     </div>
                 </div>
 
@@ -1130,7 +1130,7 @@ function viewOrder(orderId) {
                     <small class="text-muted">Entrega</small>
                     <div class="form-control bg-light">
                         ${escapeHTML(
-                            order.fulfillmentStatus || "Não informado"
+                            order.fulfillmentStatus || "NÃ£o informado"
                         )}
                     </div>
                 </div>
@@ -1377,7 +1377,7 @@ function renderCustomers() {
 
     setSummary("customers-summary", [
         {
-            label: "Clientes únicos",
+            label: "Clientes Ãºnicos",
             value: filtered.length
         },
         {
@@ -1472,7 +1472,7 @@ window.renderCustomers = renderCustomers;
 window.clearCustomerFilter = clearCustomerFilter;
 
 /* =========================================================
-   3. COMISSÕES
+   3. COMISSÃ•ES
 ========================================================= */
 
 async function loadCommissions() {
@@ -1499,12 +1499,12 @@ async function loadCommissions() {
         renderCommissions();
 
     } catch (error) {
-        console.error("Erro ao carregar comissões:", error);
+        console.error("Erro ao carregar comissÃµes:", error);
 
         tbody.innerHTML = `
             <tr>
                 <td colspan="10" class="admin-empty admin-danger-text">
-                    Erro ao carregar comissões.
+                    Erro ao carregar comissÃµes.
                 </td>
             </tr>
         `;
@@ -1528,7 +1528,7 @@ function createCommissionInterface() {
             >
 
             <label class="mb-0 small text-muted">
-                Até
+                AtÃ©
             </label>
 
             <input
@@ -1584,7 +1584,7 @@ function createCommissionInterface() {
                 <th>Cupom</th>
                 <th>Pedido</th>
                 <th>%</th>
-                <th>Comissão</th>
+                <th>ComissÃ£o</th>
                 <th>Data</th>
                 <th>Pagamento</th>
             `;
@@ -1690,7 +1690,7 @@ function renderCommissions() {
             value: money(orderTotal)
         },
         {
-            label: "Comissões",
+            label: "ComissÃµes",
             value: money(commissionTotal)
         },
         {
@@ -1703,7 +1703,7 @@ function renderCommissions() {
         tbody.innerHTML = `
             <tr>
                 <td colspan="10" class="admin-empty">
-                    Nenhuma comissão encontrada no período.
+                    Nenhuma comissÃ£o encontrada no perÃ­odo.
                 </td>
             </tr>
         `;
@@ -1803,7 +1803,7 @@ async function updateCommissionStatus(id, status) {
         );
 
         if (!item) {
-            throw new Error("Comissão não encontrada.");
+            throw new Error("ComissÃ£o nÃ£o encontrada.");
         }
 
         switch (status) {
@@ -1830,7 +1830,7 @@ async function updateCommissionStatus(id, status) {
 
             default:
                 throw new Error(
-                    `Status de comissão inválido: ${status}`
+                    `Status de comissÃ£o invÃ¡lido: ${status}`
                 );
         }
 
@@ -1840,13 +1840,13 @@ async function updateCommissionStatus(id, status) {
 
     } catch (error) {
         console.error(
-            "Erro ao atualizar comissão:",
+            "Erro ao atualizar comissÃ£o:",
             error
         );
 
         alert(
             error?.message ||
-            "Não foi possível atualizar a comissão."
+            "NÃ£o foi possÃ­vel atualizar a comissÃ£o."
         );
 
         renderCommissions();
@@ -1868,7 +1868,7 @@ async function saveCoupon(event) {
         document.getElementById("coup-code")?.value.trim();
 
     if (!codeInput) {
-        alert("Informe o código do cupom.");
+        alert("Informe o cÃ³digo do cupom.");
         return;
     }
 
@@ -1995,13 +1995,13 @@ function createCouponInterface() {
 
         if (headers) {
             headers.innerHTML = `
-                <th>Código</th>
+                <th>CÃ³digo</th>
                 <th>Tipo</th>
                 <th>Valor</th>
                 <th>Afiliado</th>
-                <th>Comissão</th>
+                <th>ComissÃ£o</th>
                 <th>Status</th>
-                <th>Ações</th>
+                <th>AÃ§Ãµes</th>
             `;
         }
     }
@@ -2168,7 +2168,7 @@ function editCoupon(id) {
 
                 <div class="mb-3">
                     <label class="form-label">
-                        Código
+                        CÃ³digo
                     </label>
 
                     <input
@@ -2228,7 +2228,7 @@ function editCoupon(id) {
 
                 <div class="mb-3">
                     <label class="form-label">
-                        Comissão %
+                        ComissÃ£o %
                     </label>
 
                     <input
@@ -2357,7 +2357,7 @@ async function toggleCoupon(id) {
 
     } catch (error) {
         console.error(error);
-        alert("Não foi possível alterar o status do cupom.");
+        alert("NÃ£o foi possÃ­vel alterar o status do cupom.");
     }
 }
 
@@ -2385,7 +2385,7 @@ async function deleteCoupon(id) {
 
     } catch (error) {
         console.error(error);
-        alert("Não foi possível excluir o cupom.");
+        alert("NÃ£o foi possÃ­vel excluir o cupom.");
     }
 }
 
@@ -2418,14 +2418,14 @@ async function loadProducts() {
 
         if (!Array.isArray(data)) {
             throw new Error(
-                "products.normalized.json não contém um array de produtos."
+                "products.normalized.json nÃ£o contÃ©m um array de produtos."
             );
         }
 
         /*
-         * O catálogo e o estoque são fontes diferentes.
+         * O catÃ¡logo e o estoque sÃ£o fontes diferentes.
          *
-         * Catálogo:
+         * CatÃ¡logo:
          *   products.normalized.json
          *
          * Estoque:
@@ -2487,7 +2487,7 @@ async function loadProducts() {
                 /*
                  * Estoque operacional vem do Firestore.
                  *
-                 * Se ainda não houver registro para o SKU,
+                 * Se ainda nÃ£o houver registro para o SKU,
                  * permanece UNKNOWN sem inventar quantidade.
                  */
                 stockStatus:
@@ -2514,11 +2514,11 @@ async function loadProducts() {
             );
 
         console.log(
-            `✅ ${products.length} produtos carregados de products.normalized.json`
+            `âœ… ${products.length} produtos carregados de products.normalized.json`
         );
 
         console.log(
-            `📦 ${stockMap.size} registros de estoque carregados do Firestore`
+            `ðŸ“¦ ${stockMap.size} registros de estoque carregados do Firestore`
         );
 
         createProductInterface();
@@ -2526,7 +2526,7 @@ async function loadProducts() {
 
     } catch (error) {
         console.error(
-            "Erro ao carregar catálogo normalizado:",
+            "Erro ao carregar catÃ¡logo normalizado:",
             error
         );
 
@@ -2542,7 +2542,7 @@ async function loadProducts() {
                         colspan="7"
                         class="text-center py-4 text-danger"
                     >
-                        Erro ao carregar catálogo.
+                        Erro ao carregar catÃ¡logo.
                     </td>
                 </tr>
             `;
@@ -2598,9 +2598,9 @@ function createProductInterface() {
                 <th>Imagem</th>
                 <th>SKU</th>
                 <th>Produto</th>
-                <th>Preço</th>
+                <th>PreÃ§o</th>
                 <th>Estoque</th>
-                <th>Ações</th>
+                <th>AÃ§Ãµes</th>
             `;
         }
     }
@@ -2822,19 +2822,12 @@ function renderProductsTable() {
     }).join("");
 }
 
-async function updateProductField(index, field, value) {
+function updateProductField(index, field, value) {
     const product = products[index];
 
-    if (!product) {
-        console.warn(
-            `Produto não encontrado no índice: ${index}`
-        );
-
-        return;
-    }
+    if (!product) return;
 
     switch (field) {
-
         case "price": {
             const price = Number(value);
 
@@ -2843,96 +2836,36 @@ async function updateProductField(index, field, value) {
                     ? price
                     : 0;
 
-            renderProductsTable();
-
             break;
         }
 
         case "stockQuantity": {
             const quantity = Number(value);
 
-            if (
-                !Number.isInteger(quantity) ||
-                quantity < 0
-            ) {
-                alert(
-                    "A quantidade de estoque deve ser um número inteiro maior ou igual a zero."
-                );
+            product.stockQuantity =
+                Number.isInteger(quantity) && quantity >= 0
+                    ? quantity
+                    : 0;
 
-                renderProductsTable();
-
-                return;
-            }
-
-            if (!product.sku) {
-                alert(
-                    "Não é possível atualizar o estoque: produto sem SKU."
-                );
-
-                renderProductsTable();
-
-                return;
-            }
-
-            const stockStatus =
-                quantity > 0
+            product.stockStatus =
+                product.stockQuantity > 0
                     ? "in_stock"
                     : "out_of_stock";
-
-            try {
-
-                await stockRepository.setStock(
-                    product.sku,
-                    {
-                        quantity,
-                        status: stockStatus,
-                        updatedAt: serverTimestamp()
-                    }
-                );
-
-                product.stockQuantity = quantity;
-
-                product.stockStatus =
-                    stockStatus;
-
-                console.log(
-                    "✅ Estoque atualizado:",
-                    {
-                        sku: product.sku,
-                        quantity,
-                        status: stockStatus
-                    }
-                );
-
-                renderProductsTable();
-
-            } catch (error) {
-
-                console.error(
-                    "❌ Erro ao salvar estoque:",
-                    error
-                );
-
-                alert(
-                    error?.message ||
-                    "Não foi possível salvar o estoque."
-                );
-
-                await loadProducts();
-            }
 
             break;
         }
 
         default:
-
             console.warn(
-                `Campo de produto não permitido: ${field}`
+                `Campo de produto nÃ£o permitido: ${field}`
             );
 
             return;
     }
+
+    renderProductsTable();
 }
+
 function deleteProduct(index) {
     const product = products[index];
 
@@ -2940,7 +2873,7 @@ function deleteProduct(index) {
 
     if (
         !confirm(
-            `Remover "${product.name}" do catálogo carregado?`
+            `Remover "${product.name}" do catÃ¡logo carregado?`
         )
     ) {
         return;
@@ -3027,30 +2960,30 @@ function saveProduct(event) {
         ?.reset();
 
     alert(
-        "Produto adicionado ao catálogo em memória."
+        "Produto adicionado ao catÃ¡logo em memÃ³ria."
     );
 }
 
 function exportCSV() {
     if (!products.length) {
-        alert("Não há produtos para exportar.");
+        alert("NÃ£o hÃ¡ produtos para exportar.");
         return;
     }
 
     /*
      * O estado interno usa exclusivamente o contrato normalizado.
      *
-     * A exportação mantém o formato CSV externo
+     * A exportaÃ§Ã£o mantÃ©m o formato CSV externo
      * para compatibilidade com planilhas existentes.
      */
 
     const columns = [
         ["Produto", "name"],
         ["peso", "weight"],
-        ["Preço", "price"],
+        ["PreÃ§o", "price"],
         ["Categoria", "category"],
         ["Estoque", "stockQuantity"],
-        ["Descrição", "description"],
+        ["DescriÃ§Ã£o", "description"],
         ["SKU", "sku"],
         ["Imagem", "image"]
     ];
@@ -3106,7 +3039,7 @@ window.exportCSV = exportCSV;
 window.renderProductsTable = renderProductsTable;
 
 /* =========================================================
-   INICIALIZAÇÃO
+   INICIALIZAÃ‡ÃƒO
 ========================================================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -3121,3 +3054,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         loadProducts()
     ]);
 });
+
+
+

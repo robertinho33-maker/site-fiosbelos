@@ -3,16 +3,7 @@
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    function isMaster() {
-      return isAuthenticated()
-        && request.auth.token.role == "master";
-    }
-
-    // Pedidos
+    // Regras para Pedidos
     match /orders/{orderId} {
       allow read, write: if true;
     }
@@ -22,17 +13,17 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
-    // Clientes
+    // Regras para Clientes
     match /customers/{customerId} {
       allow read, write: if true;
     }
 
-    // Cupons
+    // Regras para Cupons
     match /coupons/{couponId} {
       allow read, write: if true;
     }
 
-    // Comissões
+    // Regras para Comissões
     match /commissions/{commissionId} {
       allow read, write: if true;
     }
@@ -42,17 +33,9 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
-    // Perfis de usuário
-    match /userProfiles/{userId} {
-      allow read: if isAuthenticated()
-        && request.auth.uid == userId;
-
-      allow create, update: if isMaster();
-    }
-
     // Estoque operacional
+    
     match /inventory/{sku} {
-
       allow read: if isMaster();
 
       allow create: if isMaster()
@@ -62,8 +45,6 @@ service cloud.firestore {
 
       allow update: if isMaster()
         && request.resource.data.sku == sku
-        && request.resource.data.quantity == request.resource.data.quantity
-        && request.resource.data.sku == sku
         && request.resource.data.quantity is int
         && request.resource.data.quantity >= 0;
 
@@ -71,3 +52,5 @@ service cloud.firestore {
     }
   }
 }
+
+

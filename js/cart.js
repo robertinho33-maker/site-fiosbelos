@@ -1,4 +1,4 @@
-import { db } from "./firebase-config.js";
+import { db, auth } from "./firebase-config.js";
 
 import {
     collection,
@@ -1248,25 +1248,17 @@ async function processCheckout(event) {
         return;
     }
 
-    // 2. IDENTIDADE ÚNICA DO CLIENTE (CHAVE PADRONIZADA)
-    const normalizedPhone = customerData.phone.replace(/\D/g, "");
-    const normalizedEmail = customerData.email.toLowerCase().trim();
+    // 2. IDENTIDADE DO CLIENTE — SEMPRE O UID DO FIREBASE AUTH
+    const currentUser = auth.currentUser;
 
-    let customerId;
-    if (normalizedPhone) {
-        customerId = `phone_${normalizedPhone}`;
-    } else if (normalizedEmail) {
-        customerId = `email_${normalizedEmail.replace(/[^a-z0-9]/gi, "_")}`;
-    } else {
-        const fallback = `${customerData.name}_${customerData.city}`
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[^a-z0-9]+/g, "_")
-            .replace(/^_|_$/g, "");
-
-        customerId = `customer_${fallback || Date.now()}`;
+    if (!currentUser) {
+        alert("É necessário entrar ou criar uma conta antes de finalizar a compra.");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-brands fa-whatsapp me-2"></i>Enviar Pedido via WhatsApp';
+        return;
     }
+
+    const customerId = currentUser.uid;
 
     // 3. CÁLCULO DE VALORES E COMISSÃO
 // =====================================================
@@ -1282,6 +1274,13 @@ const checkoutCoupon =
     typeof appliedCoupon === "object"
         ? appliedCoupon
         : null;
+
+    if (checkoutCoupon?.influencerUid && typeof checkoutCoupon.influencerUid !== "string") {
+        alert("O cupom de influenciador não possui uma identificação válida.");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-brands fa-whatsapp me-2"></i>Enviar Pedido via WhatsApp';
+        return;
+    }
 
 const financials =
     calculateOrderFinancials(
@@ -1310,13 +1309,17 @@ const financials =
     // Identidade do pedido
     orderNumber,
     customerId,
+    customerUid: currentUser.uid,
+    influencerUid: checkoutCoupon?.influencerUid || null,
 
     // =====================================================
     // CLIENTE
     // =====================================================
-    customer: {
+        customer: {
+        uid: currentUser.uid,
         name: customerData.name,
-        email: customerData.email,
+        email: currentUser.email || customerData.email || "",
+
         phone: customerData.phone,
         birthDate: customerData.birthDate || null,
 
@@ -1371,12 +1374,15 @@ const financials =
     // =====================================================
     // CUPOM
     // =====================================================
-    coupon: checkoutCoupon
+        coupon: checkoutCoupon
     ? {
         code: checkoutCoupon.code,
+        influencerUid: checkoutCoupon.influencerUid || null,
         affiliateName: checkoutCoupon.affiliateName || null,
+        commissionPercent: Number(checkoutCoupon.commissionPercent) || 0,
         commissionAmount: calcCommission
     }
+
     : null,
 
     // =====================================================
@@ -1466,9 +1472,11 @@ const financials =
         if (checkoutCoupon && calcCommission > 0) {
     await createCommissionOperation({
         commission: {
-            orderId: orderRef.id,
+                        orderId: orderRef.id,
+            influencerUid: checkoutCoupon.influencerUid || null,
             affiliateName:
                 checkoutCoupon.affiliateName || "Geral",
+
             code:
                 checkoutCoupon.code,
             pixKey:
@@ -1597,3 +1605,4 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     }
 });
+

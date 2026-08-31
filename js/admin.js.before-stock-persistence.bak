@@ -2822,19 +2822,12 @@ function renderProductsTable() {
     }).join("");
 }
 
-async function updateProductField(index, field, value) {
+function updateProductField(index, field, value) {
     const product = products[index];
 
-    if (!product) {
-        console.warn(
-            `Produto não encontrado no índice: ${index}`
-        );
-
-        return;
-    }
+    if (!product) return;
 
     switch (field) {
-
         case "price": {
             const price = Number(value);
 
@@ -2843,96 +2836,36 @@ async function updateProductField(index, field, value) {
                     ? price
                     : 0;
 
-            renderProductsTable();
-
             break;
         }
 
         case "stockQuantity": {
             const quantity = Number(value);
 
-            if (
-                !Number.isInteger(quantity) ||
-                quantity < 0
-            ) {
-                alert(
-                    "A quantidade de estoque deve ser um número inteiro maior ou igual a zero."
-                );
+            product.stockQuantity =
+                Number.isInteger(quantity) && quantity >= 0
+                    ? quantity
+                    : 0;
 
-                renderProductsTable();
-
-                return;
-            }
-
-            if (!product.sku) {
-                alert(
-                    "Não é possível atualizar o estoque: produto sem SKU."
-                );
-
-                renderProductsTable();
-
-                return;
-            }
-
-            const stockStatus =
-                quantity > 0
+            product.stockStatus =
+                product.stockQuantity > 0
                     ? "in_stock"
                     : "out_of_stock";
-
-            try {
-
-                await stockRepository.setStock(
-                    product.sku,
-                    {
-                        quantity,
-                        status: stockStatus,
-                        updatedAt: serverTimestamp()
-                    }
-                );
-
-                product.stockQuantity = quantity;
-
-                product.stockStatus =
-                    stockStatus;
-
-                console.log(
-                    "✅ Estoque atualizado:",
-                    {
-                        sku: product.sku,
-                        quantity,
-                        status: stockStatus
-                    }
-                );
-
-                renderProductsTable();
-
-            } catch (error) {
-
-                console.error(
-                    "❌ Erro ao salvar estoque:",
-                    error
-                );
-
-                alert(
-                    error?.message ||
-                    "Não foi possível salvar o estoque."
-                );
-
-                await loadProducts();
-            }
 
             break;
         }
 
         default:
-
             console.warn(
                 `Campo de produto não permitido: ${field}`
             );
 
             return;
     }
+
+    renderProductsTable();
 }
+
 function deleteProduct(index) {
     const product = products[index];
 
@@ -3121,3 +3054,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         loadProducts()
     ]);
 });
+
+
+
